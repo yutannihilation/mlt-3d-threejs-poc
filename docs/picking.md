@@ -92,8 +92,8 @@ Two details matter, because the promise resolves after the frame that issued it:
 
 With the tile and the line id, everything else comes from the decoded columns on the CPU, for one line:
 
-- `featureOfLine[line]` gives the feature, and the property columns give its values (`isPresent` checks for
-  absent ones).
+- `featureOfLine[line]` gives the feature, and `columnValue` gives its value in each property column, or
+  `undefined` where it has none.
 - `featureGeometry` gives the feature's lines as views; the one whose first vertex has this line id is the
   picked part of a `MultiLineString`, and its lowest and highest `z`, through `toElevation`, give the
   altitude range shown.

@@ -1,4 +1,4 @@
-import { isPresent, type MltColumnLayer } from "@maplibre/mlt-wasm";
+import { columnValue, type MltColumnLayer } from "@maplibre/mlt-wasm";
 
 export type Rgb = readonly [number, number, number];
 
@@ -64,9 +64,7 @@ export function lineStyleTexels(
   const height = Math.max(1, Math.ceil(featureOfLine.length / STYLE_WIDTH));
   const texels = new Uint8Array(STYLE_WIDTH * height * 4);
   for (let line = 0; line < featureOfLine.length; line++) {
-    const feature = featureOfLine[line];
-    const value =
-      direction && isPresent(direction, feature) ? direction.values[feature] : undefined;
+    const value = direction && columnValue(direction, featureOfLine[line]);
     const [r, g, b] = (value !== undefined && DIRECTION_COLORS[value]) || NO_DIRECTION;
     texels.set([r, g, b, 255], line * 4);
   }

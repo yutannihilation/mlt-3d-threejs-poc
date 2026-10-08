@@ -1,4 +1,4 @@
-import { featureGeometry, isPresent, toElevation } from "@maplibre/mlt-wasm";
+import { columnValue, featureGeometry, toElevation } from "@maplibre/mlt-wasm";
 import {
   type CustomLayerInterface,
   type CustomRenderMethodInput,
@@ -306,8 +306,8 @@ export class LinesLayer implements CustomLayerInterface {
     const feature = ids.featureOfLine[line];
     const properties: Record<string, number | string | boolean> = {};
     for (const column of layer.properties) {
-      if (!isPresent(column, feature)) continue;
-      const value = column.values[feature];
+      const value = columnValue(column, feature);
+      if (value === undefined) continue;
       properties[column.name] = column.type === "bool" ? value === 1 : value;
     }
     // The line's vertices, as a view: its z are every third value.
