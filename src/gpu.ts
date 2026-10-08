@@ -1,4 +1,6 @@
 import {
+  BufferAttribute,
+  BufferGeometry,
   DataTexture,
   DoubleSide,
   Float32BufferAttribute,
@@ -7,6 +9,7 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   LinearFilter,
+  MeshBasicMaterial,
   NearestFilter,
   RGBAFormat,
   ShaderMaterial,
@@ -16,6 +19,7 @@ import {
 } from "three";
 import { ALTITUDE_RANGE_M } from "./config";
 import { LINE_BITS } from "./pick-id";
+import type { Ribbons } from "./ribbon";
 import { LINE_FRAGMENT, LINE_VERTEX, PICK_FRAGMENT } from "./shaders";
 import { altitudeRampTexels, RAMP_WIDTH, STYLE_WIDTH } from "./style";
 import type { TileFrame } from "./transform";
@@ -45,6 +49,23 @@ export function segmentGeometry(
   geometry.setAttribute("aLineEnd", new InterleavedBufferAttribute(lines, 1, 1));
   geometry.instanceCount = vertices.length / 3 - 1;
   return geometry;
+}
+
+/**
+ * Ribbons as a stock Three.js geometry: final positions, 8-bit vertex colours, and the
+ * triangles' indices. Any stock material with `vertexColors` draws it.
+ */
+export function ribbonGeometry(ribbons: Ribbons, colors: Uint8Array): BufferGeometry {
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new BufferAttribute(ribbons.positions, 3));
+  geometry.setAttribute("color", new BufferAttribute(colors, 3, true));
+  geometry.setIndex(new BufferAttribute(ribbons.indices, 1));
+  return geometry;
+}
+
+/** One material for every tile's ribbons; a ribbon is seen from above and below. */
+export function ribbonMaterial(): MeshBasicMaterial {
+  return new MeshBasicMaterial({ vertexColors: true, side: DoubleSide });
 }
 
 export function rampTexture(): DataTexture {

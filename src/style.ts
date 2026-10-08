@@ -72,3 +72,27 @@ export function lineStyleTexels(
   }
   return { texels, height };
 }
+
+/**
+ * The colours of ribbon vertices, `r, g, b` bytes each, for a stock material's vertex colours:
+ * by altitude from the ramp, and by line from the style texels.
+ */
+export function ribbonColors(
+  metres: Float32Array,
+  lines: Uint32Array,
+  styleTexels: Uint8Array,
+  range: readonly [number, number],
+): { altitude: Uint8Array; direction: Uint8Array } {
+  const ramp = altitudeRampTexels();
+  const [lo, hi] = range;
+  const altitude = new Uint8Array(metres.length * 3);
+  const direction = new Uint8Array(metres.length * 3);
+  for (let i = 0; i < metres.length; i++) {
+    const t = Math.min(1, Math.max(0, (metres[i] - lo) / (hi - lo)));
+    const r = Math.round(t * (RAMP_WIDTH - 1)) * 4;
+    altitude.set(ramp.subarray(r, r + 3), i * 3);
+    const s = lines[i] * 4;
+    direction.set(styleTexels.subarray(s, s + 3), i * 3);
+  }
+  return { altitude, direction };
+}

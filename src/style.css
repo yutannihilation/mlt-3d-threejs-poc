@@ -40,6 +40,12 @@ body {
   font-size: 12px;
 }
 
+.panel .toggle {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
 .legend .ramp {
   height: 10px;
   border-radius: 2px;

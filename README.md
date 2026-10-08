@@ -5,7 +5,8 @@ with Three.js on a MapLibre map, built on the columnar decoder of `@maplibre/mlt
 answers is how to get decoded tile data onto the GPU with as little work in between as possible.
 
 It renders one data type, 3D lines (a day of flight trails to and from Tokyo Haneda), with two styles, and
-picks the line under the cursor on the GPU.
+picks the line under the cursor on the GPU. A toggle draws the lines as flat ribbons instead, tessellated on
+the CPU and drawn by a stock Three.js material, to compare the two paths.
 
 ![Flight trails around Tokyo in 3D, coloured by altitude from purple near the ground to yellow at cruise](docs/images/altitude.jpg)
 
@@ -31,6 +32,8 @@ style texture, and is what picking reads back. Per vertex, the CPU does nothing 
   lines in screen space, and the two colour modes.
 - [Picking](docs/picking.md): the one-pixel id render, id encoding, the asynchronous readback, and the
   tooltip.
+- [Ribbons](docs/ribbons.md): tessellating lines into flat strips with round joins on the CPU, drawing them
+  with a stock material, and what it costs.
 - [Limitations and next steps](docs/extending.md): what is not done, and how points, polygons, joins and a
   worker would fit the same pattern.
 

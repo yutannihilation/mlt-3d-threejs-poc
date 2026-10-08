@@ -17,7 +17,11 @@ comparison renders both at the same URL hash (the camera is kept in it) and reco
 - **Line joins and caps.** Segments are independent quads. Joins need the neighbouring vertices: read the
   vertex buffer at four offsets (0, 3, 6, 9 elements) and draw the middle segment `v[i+1] → v[i+2]`, with the
   outer two giving the directions for a miter or a round join. The line ids at the same offsets say whether a
-  neighbour belongs to the same line. It stays one buffer, read four times.
+  neighbour belongs to the same line. It stays one buffer, read four times. (The ribbons have round joins,
+  but they are tessellated on the CPU; see [Ribbons](ribbons.md).)
+- **Ribbons**: tessellation runs on the main thread, about 255 ms when toggling at the initial view, and
+  their width is fixed at tessellation. A worker would remove the hitch; simplifying low-zoom lines would cut
+  most of the work. See [Ribbons](ribbons.md#cost).
 - **One draw call per tile.** At the initial view that is 20 draw calls, which is fine. Many more tiles, or many
   layers, would want tiles packed into shared buffers and drawn with `WEBGL_multi_draw`, or a
   `BatchedMesh`-like scheme, with the tile frame in a texture indexed by the draw id.

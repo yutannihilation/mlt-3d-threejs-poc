@@ -19,10 +19,17 @@ const map = new MapLibreMap({
 });
 map.addControl(new NavigationControl({ visualizePitch: true }), "top-right");
 
-const panel = createPanel(document.body, (mode) => {
-  lines.colorMode = mode;
-  map.triggerRepaint();
-});
+const panel = createPanel(
+  document.body,
+  (mode) => {
+    lines.colorMode = mode;
+    map.triggerRepaint();
+  },
+  (shape) => {
+    lines.shape = shape;
+    map.triggerRepaint();
+  },
+);
 const lines = new LinesLayer((stats) => panel.setStats(stats));
 map.on("load", () => map.addLayer(lines));
 // For poking at the renderer from the console during development.

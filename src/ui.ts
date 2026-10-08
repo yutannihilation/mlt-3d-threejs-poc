@@ -1,5 +1,5 @@
-import { ALTITUDE_RANGE_M } from "./config";
-import type { ColorMode, Hit, Stats } from "./layer";
+import { ALTITUDE_RANGE_M, RIBBON_WIDTH_M } from "./config";
+import type { ColorMode, Hit, Shape, Stats } from "./layer";
 import { altitudeGradientCss, DIRECTION_COLORS } from "./style";
 import "./style.css";
 
@@ -32,8 +32,12 @@ export interface Panel {
   setTooltip(at: { x: number; y: number; lines: string[] } | null): void;
 }
 
-/** The legend, colour mode switch, stats and tooltip overlaid on `container`. */
-export function createPanel(container: HTMLElement, onColorMode: (mode: ColorMode) => void): Panel {
+/** The legend, colour mode and shape switches, stats and tooltip overlaid on `container`. */
+export function createPanel(
+  container: HTMLElement,
+  onColorMode: (mode: ColorMode) => void,
+  onShape: (shape: Shape) => void,
+): Panel {
   const [lo, hi] = ALTITUDE_RANGE_M;
   const panel = document.createElement("div");
   panel.className = "panel";
@@ -44,9 +48,10 @@ export function createPanel(container: HTMLElement, onColorMode: (mode: ColorMod
   panel.innerHTML = `
     <h1>MLT columns straight to the GPU</h1>
     <fieldset class="modes">
-      <label><input type="radio" name="mode" value="altitude" checked /> altitude, from z in the shader</label>
-      <label><input type="radio" name="mode" value="direction" /> direction, from a per-line texture</label>
+      <label><input type="radio" name="mode" value="altitude" checked /> colour by altitude</label>
+      <label><input type="radio" name="mode" value="direction" /> colour by direction</label>
     </fieldset>
+    <label class="toggle"><input type="checkbox" name="ribbons" /> ribbons, ${RIBBON_WIDTH_M.toLocaleString("en-US")} m wide, tessellated on the CPU</label>
     <div class="legend legend-altitude">
       <div class="ramp" style="background: ${altitudeGradientCss()}"></div>
       <div class="ticks"><span>${lo.toLocaleString("en-US")} m</span><span>${hi.toLocaleString("en-US")} m+</span></div>
@@ -63,6 +68,8 @@ export function createPanel(container: HTMLElement, onColorMode: (mode: ColorMod
       onColorMode(mode);
     });
   }
+  const ribbons = panel.querySelector<HTMLInputElement>("input[name=ribbons]")!;
+  ribbons.addEventListener("change", () => onShape(ribbons.checked ? "ribbons" : "lines"));
   const stats = panel.querySelector<HTMLParagraphElement>(".stats")!;
   const tooltip = document.createElement("div");
   tooltip.className = "tooltip";

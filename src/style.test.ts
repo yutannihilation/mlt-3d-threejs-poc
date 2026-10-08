@@ -8,6 +8,7 @@ import {
   DIRECTION_COLORS,
   lineStyleTexels,
   RAMP_WIDTH,
+  ribbonColors,
   STYLE_WIDTH,
 } from "./style";
 
@@ -20,6 +21,22 @@ describe("altitudeRampTexels", () => {
     expect(texels).toHaveLength(RAMP_WIDTH * 4);
     expect([...texels.subarray(0, 4)]).toEqual([...ALTITUDE_RAMP[0], 255]);
     expect([...texels.subarray(-4)]).toEqual([...ALTITUDE_RAMP.at(-1)!, 255]);
+  });
+});
+
+describe("ribbonColors", () => {
+  test("colours each vertex by its altitude, and by its line's texel", () => {
+    const texels = Uint8Array.of(1, 2, 3, 255, 4, 5, 6, 255);
+    const { altitude, direction } = ribbonColors(
+      Float32Array.of(-100, 6000, 99999),
+      Uint32Array.of(0, 1, 1),
+      texels,
+      [0, 12000],
+    );
+    const ramp = altitudeRampTexels();
+    const texel = (i: number) => [...ramp.subarray(i * 4, i * 4 + 3)];
+    expect([...altitude]).toEqual([...texel(0), ...texel(128), ...texel(RAMP_WIDTH - 1)]);
+    expect([...direction]).toEqual([1, 2, 3, 4, 5, 6, 4, 5, 6]);
   });
 });
 

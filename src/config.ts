@@ -14,6 +14,9 @@ export const ALTITUDE_RANGE_M: readonly [number, number] = [0, 12000];
 /** Width of every line in CSS pixels. */
 export const LINE_WIDTH_PX = 1.5;
 
+/** Width of every ribbon in metres; ribbons are tessellated at this width. */
+export const RIBBON_WIDTH_M = 1500;
+
 /** How far from a line, in CSS pixels, the cursor still hovers it. */
 export const PICK_RADIUS_PX = 4;
 
