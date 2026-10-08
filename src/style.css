@@ -1,0 +1,95 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+.panel {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 300px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: rgb(20 20 24 / 0.85);
+  font-size: 13px;
+  line-height: 1.4;
+  z-index: 1;
+}
+
+.panel h1 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.panel .modes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  font-size: 12px;
+}
+
+.legend .ramp {
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legend .ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.legend-direction {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.legend[hidden] {
+  display: none;
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.panel .stats {
+  margin: 8px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel .note {
+  margin: 0;
+  color: #999;
+  font-size: 11px;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: rgb(0 0 0 / 0.85);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 2;
+}

@@ -1,0 +1,44 @@
+import { Vector4 } from "three";
+import { describe, expect, test } from "vite-plus/test";
+import { pickMatrix, tileFrame } from "./transform";
+
+describe("tileFrame", () => {
+  test("places the world tile at the origin with one metre per z step", () => {
+    expect(tileFrame({ z: 0, x: 0, y: 0 }, 4096, 0)).toEqual({
+      origin: [0, 0],
+      scale: 1 / 4096,
+      zScale: 1,
+      zOffset: -10000,
+    });
+  });
+
+  test("offsets a tile by its position and scales a fine z grid", () => {
+    const frame = tileFrame({ z: 2, x: 3, y: 1 }, 4096, -2);
+    expect(frame.origin).toEqual([0.75, 0.25]);
+    expect(frame.scale).toBeCloseTo(1 / (4096 * 4), 15);
+    expect(1001234 * frame.zScale + frame.zOffset).toBeCloseTo(12.34, 9);
+  });
+});
+
+describe("pickMatrix", () => {
+  const [width, height] = [800, 600];
+  const clipAt = (px: number, py: number, w = 1) =>
+    new Vector4((2 * (px + 0.5)) / width - 1, 1 - (2 * (py + 0.5)) / height, 0, 1).multiplyScalar(
+      w,
+    );
+
+  test("maps the picked pixel to the viewport's centre", () => {
+    const m = pickMatrix(100, 50, width, height);
+    const v = clipAt(100, 50).applyMatrix4(m);
+    expect(v.x / v.w).toBeCloseTo(0, 12);
+    expect(v.y / v.w).toBeCloseTo(0, 12);
+  });
+
+  test("maps the neighbouring pixel one viewport away, also behind perspective", () => {
+    const m = pickMatrix(100, 50, width, height);
+    const right = clipAt(101, 50, 3).applyMatrix4(m);
+    expect(right.x / right.w).toBeCloseTo(2, 9);
+    const below = clipAt(100, 51, 3).applyMatrix4(m);
+    expect(below.y / below.w).toBeCloseTo(-2, 9);
+  });
+});

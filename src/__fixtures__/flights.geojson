@@ -1,0 +1,43 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "icao": "abc123",
+        "callsign": "TEST1",
+        "type": "B738",
+        "direction": "departure",
+        "start_time": 1790000000
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [139.78, 35.55, 0],
+          [139.9, 35.6, 1500],
+          [140.2, 35.8, 9000]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "icao": "def456"
+      },
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [135.4, 34.4, 3000],
+            [135.6, 34.6, 3500]
+          ],
+          [
+            [136.0, 35.0, 11000],
+            [136.2, 35.1, 11000],
+            [136.4, 35.2, 10500]
+          ]
+        ]
+      }
+    }
+  ]
+}
