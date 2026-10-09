@@ -12,6 +12,16 @@ import { featureGeometry, type MltColumnLayer } from "@maplibre/mlt-wasm";
 export interface LineIds {
   readonly lineOfVertex: Uint32Array;
   readonly featureOfLine: Uint32Array;
+  /**
+   * Where each feature's lines start: feature `f` has lines
+   * `featureLineStart[f] .. featureLineStart[f + 1]`.
+   */
+  readonly featureLineStart: Uint32Array;
+}
+
+/** The lines `[start, end)` of feature `feature`, which are contiguous. */
+export function featureLines(ids: LineIds, feature: number): [number, number] {
+  return [ids.featureLineStart[feature], ids.featureLineStart[feature + 1]];
 }
 
 /** Throws when a feature is not a line: this renderer draws nothing else. */
@@ -19,7 +29,9 @@ export function lineIds(layer: MltColumnLayer): LineIds {
   const { dimension, vertices } = layer.geometry;
   const lineOfVertex = new Uint32Array(vertices.length / dimension);
   const featureOfLine: number[] = [];
+  const featureLineStart = new Uint32Array(layer.featureCount + 1);
   for (let f = 0; f < layer.featureCount; f++) {
+    featureLineStart[f] = featureOfLine.length;
     const g = featureGeometry(layer, f);
     if (g.kind !== "line") {
       throw new Error(`feature ${f} of layer "${layer.name}" is a ${g.kind}, expected a line`);
@@ -30,5 +42,6 @@ export function lineIds(layer: MltColumnLayer): LineIds {
       lineOfVertex.fill(id, line.firstVertex, line.firstVertex + line.vertices.length / dimension);
     }
   }
-  return { lineOfVertex, featureOfLine: Uint32Array.from(featureOfLine) };
+  featureLineStart[layer.featureCount] = featureOfLine.length;
+  return { lineOfVertex, featureOfLine: Uint32Array.from(featureOfLine), featureLineStart };
 }

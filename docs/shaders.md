@@ -120,21 +120,22 @@ behind each other.
 ## Fragment shader: two colour modes
 
 ```glsl
+int line = int(vLine);
 if (uColorMode == 0) {
   float t = (vMetres - uAltitudeRange.x) / (uAltitudeRange.y - uAltitudeRange.x);
   color = texture(uRamp, vec2(clamp(t, 0.0, 1.0), 0.5));
 } else {
-  int line = int(vLine);
   color = texelFetch(uLineStyle, ivec2(line % uStyleWidth, line / uStyleWidth), 0);
 }
-if (int(vLine) == uHighlight) color = vec4(1.0);
+if (line >= uHighlight.x && line < uHighlight.y) color = vec4(1.0);
 ```
 
 - **Altitude**: the vertex shader passes the metres it computed, interpolated along the segment, so the colour
   changes smoothly along a climbing line. The ramp texture is filtered linearly.
 - **Property**: the line id is a `flat` varying (integers cannot be interpolated), and indexes the style
   texture with `texelFetch`, unfiltered.
-- **Highlight**: the hovered line, if on this tile, is white. `uHighlight` is −1 on every other tile.
+- **Highlight**: the lines of the hovered feature's piece in this tile, `[uHighlight.x, uHighlight.y)`, are
+  white; the range is empty on a tile without a piece of it ([Picking](picking.md#highlighting-every-piece)).
 
 Switching mode sets one uniform; nothing is rebuilt.
 

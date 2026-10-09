@@ -90,24 +90,39 @@ Two details matter, because the promise resolves after the frame that issued it:
 
 ## From id to tooltip
 
-With the tile and the line id, everything else comes from the decoded columns on the CPU, for one line:
+With the tile and the line id, everything else comes from the decoded columns on the CPU:
 
 - `featureOfLine[line]` gives the feature, and `columnValue` gives its value in each property column, or
   `undefined` where it has none.
-- `featureGeometry` gives the feature's lines as views; the one whose first vertex has this line id is the
-  picked part of a `MultiLineString`, and its lowest and highest `z`, through `toElevation`, give the
-  altitude range shown.
+- The feature id, from the layer's id column, names the flight in every tile. A flight crossing several tiles
+  is clipped into a piece per tile, each a feature of its own tile with its own line ids, but every piece keeps
+  the feature id. Each tile indexes its ids once, when it is decoded (`featureIds`): every feature must have
+  one, unique in its tile, or the tile fails to load with an error saying so.
+- The altitude range shown is the lowest and highest `z` of every piece drawn, converted to metres with
+  `toElevation`, and the tooltip says how many tiles in view hold one.
 
-The highlight is a uniform: the hovered tile's draw material gets `uHighlight = line`, and the fragment shader
-draws that line white. No geometry is rebuilt.
+### Highlighting every piece
+
+The highlight is the hovered feature id. Each frame, every drawn tile looks it up in its `featureOfId` map and
+highlights that feature's lines, which are contiguous, so a tile's highlight is one range of line ids:
+
+- for lines, a uniform `uHighlight = (start, end)` per tile, which the fragment shader compares with the
+  line id;
+- for ribbons, the same lines' ribbon vertices, repainted white ([Ribbons](ribbons.md)).
+
+No geometry is rebuilt, and the pieces are not stitched into one line: they already draw as one, and joining
+them would mean undoing the clipping, the tiles' overlapping buffers and the mix of zoom levels while tiles
+load.
+
+The tiles get their ids from the source: [`scripts/build-tiles.sh`](../scripts/build-tiles.sh) gives every
+GeoJSON feature its position in the file as its `id`, which `mlt convert` writes as the MLT feature id.
 
 ## Limitations
 
 - **The position along the line is not known**, only the line, so the tooltip shows the line's altitude range
   rather than the altitude under the cursor. Writing the segment index (the instance id) instead of the line
   id would give it; the line is then found from `lineOfVertex`.
-- **The highlight is tile-local.** A flight crosses many tiles, each with its own line ids, so only the part
-  in the hovered tile turns white. Highlighting the whole flight needs a key shared across tiles, such as a
-  feature id column, matched in each tile.
+- **Only pieces in view are found.** The highlight and the altitude range cover the tiles being drawn; a
+  flight's pieces in tiles out of view, or not loaded yet, are not part of either.
 - **A tile drawn in two world copies** has one pick material, so both copies write the slot set last. Both
   slots name the same tile, so the result is still right.

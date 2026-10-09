@@ -10,7 +10,7 @@ const DIRECTION_LABELS: Record<string, string> = {
 };
 
 /** Tooltip lines for a hovered flight. */
-export function describeHit({ properties, altitude }: Hit): string[] {
+export function describeHit({ properties, altitude, tiles }: Hit): string[] {
   const text = (key: string) => {
     const value = properties[key];
     return typeof value === "string" ? value : undefined;
@@ -23,6 +23,7 @@ export function describeHit({ properties, altitude }: Hit): string[] {
   if (direction !== undefined) lines.push(DIRECTION_LABELS[direction] ?? direction);
   const metres = (m: number) => Math.round(m).toLocaleString("en-US");
   lines.push(`${metres(altitude[0])} – ${metres(altitude[1])} m`);
+  if (tiles > 1) lines.push(`across ${tiles} tiles in view`);
   return lines;
 }
 

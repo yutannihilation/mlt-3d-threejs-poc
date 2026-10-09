@@ -29,6 +29,7 @@ import {
 import { decodePickId, MAX_SLOTS } from "./pick-id";
 import { type Ribbons, tessellateRibbons } from "./ribbon";
 import { lineStyleTexels, ribbonColors } from "./style";
+import { featureLines } from "./lines";
 import { fetchLineTile, type LineTile, tileUrl } from "./tile";
 import { pickMatrix, type TileIndex } from "./transform";
 
@@ -62,11 +63,11 @@ interface RibbonTile {
   readonly ribbons: Ribbons;
   readonly geometry: THREE.BufferGeometry;
   readonly colors: Record<ColorMode, Uint8Array>;
-  /** The colours drawn: a copy of `colors[mode]`, with the highlighted line white. */
+  /** The colours drawn: a copy of `colors[mode]`, with the highlighted lines white. */
   readonly color: THREE.BufferAttribute;
   mode: ColorMode;
-  /** The highlighted line, or -1. */
-  highlight: number;
+  /** The highlighted lines, `[start, end)`; empty when none is. */
+  highlight: readonly [number, number];
   readonly meshes: Map<number, THREE.Mesh>;
 }
 
@@ -85,8 +86,10 @@ interface Drawn {
 
 export interface Hit {
   readonly properties: Record<string, number | string | boolean>;
-  /** The hovered line's lowest and highest altitude, in metres. */
+  /** The hovered feature's lowest and highest altitude over its pieces drawn, in metres. */
   readonly altitude: readonly [number, number];
+  /** How many drawn tiles hold a piece of it. */
+  readonly tiles: number;
 }
 
 interface PendingPick {
@@ -107,29 +110,31 @@ function key({ z, x, y }: TileIndex): string {
 }
 
 /**
- * Bring a ribbon's drawn colours to `mode` with line `highlight` white (-1 for none). A mode
- * change rewrites them all; a highlight change only the two lines' ranges, which are all that
- * is uploaded again.
+ * Bring a ribbon's drawn colours to `mode` with the lines `highlight` white. A mode change
+ * rewrites them all; a highlight change only the two ranges of lines, which are all that is
+ * uploaded again. A feature's lines are contiguous, and so are their ribbon vertices.
  */
-function paint(ribbon: RibbonTile, mode: ColorMode, highlight: number): void {
+function paint(ribbon: RibbonTile, mode: ColorMode, highlight: readonly [number, number]): void {
   const { color, colors, ribbons } = ribbon;
-  if (ribbon.mode === mode && ribbon.highlight === highlight) return;
+  const old = ribbon.highlight;
+  if (ribbon.mode === mode && old[0] === highlight[0] && old[1] === highlight[1]) return;
   const array = color.array as Uint8Array;
   const base = colors[mode];
-  const range = (line: number) => [ribbons.lineStart[line] * 3, ribbons.lineStart[line + 1] * 3];
   const whole = ribbon.mode !== mode;
+  /** The colour bytes of lines `[from, to)`, queued for upload unless all of them are. */
+  const bytes = ([from, to]: readonly [number, number]) => {
+    const [a, b] = [ribbons.lineStart[from] * 3, ribbons.lineStart[to] * 3];
+    if (!whole && b > a) color.addUpdateRange(a, b - a);
+    return [a, b];
+  };
   if (whole) {
     array.set(base);
-  } else if (ribbon.highlight >= 0) {
-    const [a, b] = range(ribbon.highlight);
+  } else {
+    const [a, b] = bytes(old);
     array.set(base.subarray(a, b), a);
-    if (b > a) color.addUpdateRange(a, b - a);
   }
-  if (highlight >= 0) {
-    const [a, b] = range(highlight);
-    array.fill(255, a, b);
-    if (!whole && b > a) color.addUpdateRange(a, b - a);
-  }
+  const [a, b] = bytes(highlight);
+  array.fill(255, a, b);
   ribbon.mode = mode;
   ribbon.highlight = highlight;
   color.needsUpdate = true;
@@ -167,7 +172,8 @@ export class LinesLayer implements CustomLayerInterface {
   private readonly lru = new Set<string>();
   private drawn: Drawn[] = [];
   private pending: PendingPick | null = null;
-  private highlighted: { tile: ReadyTile; line: number } | null = null;
+  /** The hovered feature's id, which its piece in every tile shares. */
+  private highlighted: number | null = null;
 
   private readonly onStats: (stats: Stats) => void;
 
@@ -237,7 +243,7 @@ export class LinesLayer implements CustomLayerInterface {
     const colorMode = this.colorMode === "altitude" ? 0 : 1;
     this.scene.clear();
     for (const { tile, wrap, matrix } of this.drawn) {
-      const highlight = this.highlighted?.tile === tile ? this.highlighted.line : -1;
+      const highlight = this.highlightLines(tile);
       if (this.shape === "ribbons") {
         const ribbon = this.ribbonFor(tile);
         paint(ribbon, this.colorMode, highlight);
@@ -250,7 +256,7 @@ export class LinesLayer implements CustomLayerInterface {
       tile.draw.uniforms.uResolution.value = resolution;
       tile.draw.uniforms.uWidth.value = LINE_WIDTH_PX;
       tile.draw.uniforms.uColorMode.value = colorMode;
-      tile.draw.uniforms.uHighlight.value = highlight;
+      tile.draw.uniforms.uHighlight.value.set(highlight[0], highlight[1]);
       draw.matrixWorld.copy(matrix);
       this.scene.add(draw);
     }
@@ -296,41 +302,66 @@ export class LinesLayer implements CustomLayerInterface {
     const drawn = this.drawn;
     await read;
     const id = decodePickId(this.pickPixel);
-    const hit = id && drawn[id.slot] ? { tile: drawn[id.slot].tile, line: id.line } : null;
-    this.setHighlight(hit);
-    return hit && this.describe(hit.tile.tile, hit.line);
+    if (!id || !drawn[id.slot]) {
+      this.setHighlight(null);
+      return null;
+    }
+    const { tile } = drawn[id.slot].tile;
+    const feature = tile.ids.featureOfLine[id.line];
+    const featureId = tile.featureIds.idOfFeature[feature];
+    this.setHighlight(featureId);
+    return this.describe(tile, feature, featureId, drawn);
   }
 
-  private describe(tile: LineTile, line: number): Hit {
-    const { layer, ids } = tile;
-    const feature = ids.featureOfLine[line];
+  /** The lines of `tile` the highlight covers: the hovered feature's piece in it, if any. */
+  private highlightLines(tile: ReadyTile): [number, number] {
+    const feature =
+      this.highlighted === null
+        ? undefined
+        : tile.tile.featureIds.featureOfId.get(this.highlighted);
+    return feature === undefined ? [0, 0] : featureLines(tile.tile.ids, feature);
+  }
+
+  /**
+   * The picked feature's properties, and its altitude range over its pieces in every tile drawn,
+   * found by its id.
+   */
+  private describe(tile: LineTile, feature: number, featureId: number, drawn: Drawn[]): Hit {
+    const { layer } = tile;
     const properties: Record<string, number | string | boolean> = {};
     for (const column of layer.properties) {
       const value = columnValue(column, feature);
       if (value === undefined) continue;
       properties[column.name] = column.type === "bool" ? value === 1 : value;
     }
-    // The line's vertices, as a view: its z are every third value.
-    const g = featureGeometry(layer, feature);
-    if (g.kind !== "line") throw new Error(`feature ${feature} is not a line`);
-    const { zStep } = layer.geometry;
-    if (zStep === undefined) throw new Error("the layer has no z");
-    let [lo, hi] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
-    for (const run of g.lines) {
-      // Each run of the feature is its own line id, in order.
-      if (ids.lineOfVertex[run.firstVertex] !== line) continue;
-      for (let i = 2; i < run.vertices.length; i += 3) {
-        const z = run.vertices[i];
-        if (z < lo) lo = z;
-        if (z > hi) hi = z;
-      }
+    // The feature's piece in each tile drawn, once per tile whatever its world copies.
+    const pieces = new Map<LineTile, number>();
+    for (const {
+      tile: { tile: t },
+    } of drawn) {
+      const f = t.featureIds.featureOfId.get(featureId);
+      if (f !== undefined) pieces.set(t, f);
     }
-    return { properties, altitude: [toElevation(lo, zStep), toElevation(hi, zStep)] };
+    let [lo, hi] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
+    for (const [t, f] of pieces) {
+      const { zStep } = t.layer.geometry;
+      if (zStep === undefined) throw new Error(`layer "${t.layer.name}" has no z`);
+      // The piece's z are every third value of its vertices; each tile has its own z grid, and
+      // metres grow with z, so only the extremes need converting.
+      const { vertices } = featureGeometry(t.layer, f);
+      let [min, max] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
+      for (let i = 2; i < vertices.length; i += 3) {
+        if (vertices[i] < min) min = vertices[i];
+        if (vertices[i] > max) max = vertices[i];
+      }
+      lo = Math.min(lo, toElevation(min, zStep));
+      hi = Math.max(hi, toElevation(max, zStep));
+    }
+    return { properties, altitude: [lo, hi], tiles: pieces.size };
   }
 
-  private setHighlight(next: { tile: ReadyTile; line: number } | null): void {
-    const same = next?.tile === this.highlighted?.tile && next?.line === this.highlighted?.line;
-    if (same) return;
+  private setHighlight(next: number | null): void {
+    if (next === this.highlighted) return;
     this.highlighted = next;
     this.map.triggerRepaint();
   }
@@ -377,7 +408,7 @@ export class LinesLayer implements CustomLayerInterface {
       colors,
       color: geometry.getAttribute("color") as THREE.BufferAttribute,
       mode: "altitude",
-      highlight: -1,
+      highlight: [0, 0],
       meshes: new Map(),
     };
     return tile.ribbon;
@@ -411,7 +442,6 @@ export class LinesLayer implements CustomLayerInterface {
   }
 
   private release(tile: ReadyTile): void {
-    if (this.highlighted?.tile === tile) this.setHighlight(null);
     tile.ribbon?.geometry.dispose();
     tile.geometry.dispose();
     tile.style.dispose();

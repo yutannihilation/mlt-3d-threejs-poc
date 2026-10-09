@@ -60,19 +60,19 @@ git clone -b feat/wasm-columnar-3d https://github.com/yutannihilation/maplibre-t
 
 ### Tiles
 
-The tiles are not in this repository: `public/tiles/{z}/{x}/{y}.mlt` is ignored by git, and can be a directory
-or a symlink. They are 3D MLT tiles with one line layer named `flights`, written by the `mlt` CLI of the same
-branch:
+The tiles are not in this repository: `public/tiles/{z}/{x}/{y}.mlt` is ignored by git. They are 3D MLT tiles
+with one line layer named `flights`, written by the `mlt` CLI of the same branch.
+[`scripts/build-tiles.sh`](scripts/build-tiles.sh) gives every feature an id and tiles them (it needs `jq`):
 
 ```bash
 cargo build --release --manifest-path maplibre-tile-spec/rust/Cargo.toml -p mlt
-maplibre-tile-spec/rust/target/release/mlt convert \
-  --mlt-version 2 --min-zoom 3 --max-zoom 10 --z-step 0 --layer flights \
-  flights.geojson mlt-3d-threejs-poc/public/tiles
+cd mlt-3d-threejs-poc && scripts/build-tiles.sh flights.geojson
 ```
 
 The input is GeoJSON of `LineString` or `MultiLineString` features with `[longitude, latitude, altitude_m]`
-positions. The tooltip and the direction style read the properties `callsign`, `registration`, `icao`, `type`
+positions. Every feature needs an id: it is what ties a flight's pieces in different tiles together for
+hovering ([Picking](docs/picking.md#highlighting-every-piece)), and a tile without ids fails to load. The script
+uses each feature's position in the file. The tooltip and the direction style read the properties `callsign`, `registration`, `icao`, `type`
 and `direction` (`departure`, `arrival` or `local`); any of them may be absent. The zoom range and the layer
 name must match [`src/config.ts`](src/config.ts).
 

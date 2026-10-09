@@ -81,7 +81,7 @@ request ─▶ loading ─▶ fetch ─▶ decodeTileColumns ─▶ lineIds, til
   use. They share the tile's geometry and materials, so a second world copy costs nothing on the GPU.
 - **Eviction.** The cache keeps 256 tiles beyond those in view, least recently requested out first, never one
   still loading. Evicting a ready tile disposes its geometry (freeing the GL buffers), its style texture and
-  its materials, and clears the highlight if it was on that tile.
+  its materials. The highlight is a feature id, not a tile, so it needs nothing cleared.
 
 Decoding runs on the main thread; see [Limitations](extending.md).
 

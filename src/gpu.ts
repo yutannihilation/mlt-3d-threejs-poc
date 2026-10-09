@@ -124,7 +124,7 @@ export function lineMaterial(frame: TileFrame, style: Texture, shared: Shared): 
       uAltitudeRange: { value: new Vector2(ALTITUDE_RANGE_M[0], ALTITUDE_RANGE_M[1]) },
       uLineStyle: { value: style },
       uStyleWidth: { value: STYLE_WIDTH },
-      uHighlight: { value: -1 },
+      uHighlight: { value: new Vector2(0, 0) },
     },
   });
 }

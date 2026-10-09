@@ -27,8 +27,8 @@ comparison renders both at the same URL hash (the camera is kept in it) and reco
   `BatchedMesh`-like scheme, with the tile frame in a texture indexed by the draw id.
 - **The quad is built per tile.** Each tile's geometry has its own copy of the 4-corner quad. Sharing one
   `BufferAttribute` between all geometries would share the GL buffer; it is a few dozen bytes per tile.
-- **Picking** finds the line, not the position along it, and highlights only within one tile; see
-  [Picking](picking.md#limitations).
+- **Picking** finds the line, not the position along it, and finds a flight's pieces only in the tiles in
+  view; see [Picking](picking.md#limitations).
 
 ## Other geometry types
 

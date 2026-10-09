@@ -79,20 +79,21 @@ uniform sampler2D uRamp;
 uniform vec2 uAltitudeRange;
 uniform sampler2D uLineStyle;
 uniform int uStyleWidth;
-uniform int uHighlight;
+// The highlighted feature's lines, [start, end); empty when none is.
+uniform ivec2 uHighlight;
 
 out vec4 outColor;
 
 void main() {
+  int line = int(vLine);
   vec4 color;
   if (uColorMode == 0) {
     float t = (vMetres - uAltitudeRange.x) / (uAltitudeRange.y - uAltitudeRange.x);
     color = texture(uRamp, vec2(clamp(t, 0.0, 1.0), 0.5));
   } else {
-    int line = int(vLine);
     color = texelFetch(uLineStyle, ivec2(line % uStyleWidth, line / uStyleWidth), 0);
   }
-  if (int(vLine) == uHighlight) color = vec4(1.0);
+  if (line >= uHighlight.x && line < uHighlight.y) color = vec4(1.0);
   outColor = color;
 }
 `;

@@ -42,8 +42,9 @@ management is off, so the 8-bit colours reach the screen as computed. The colour
 ([`ribbonColors`](../src/style.ts)): one array from the altitude ramp, one from the per-line style texels.
 
 - **Colour mode** copies the other array into the drawn `color` attribute, uploaded whole.
-- **Highlight** paints the hovered line's vertex range white and restores the previous line's range; with
-  `addUpdateRange`, only those two ranges are uploaded again.
+- **Highlight** paints the hovered feature's ribbon vertices white and restores the previous feature's; a
+  feature's lines, and so their ribbon vertices, are contiguous, and with `addUpdateRange` only those two
+  ranges are uploaded again.
 - **Picking** still uses the line pass ([Picking](picking.md)), so a ribbon is picked within the pick
   radius of its centre line, not across its whole width.
 
