@@ -10,10 +10,11 @@ how close a stock deck.gl layer gets to handing the decoded columns to the GPU a
 ## The decoded vertices as `PathLayer` positions
 
 Each tile's `PathLayer` gets binary data ([`PathData`](../src/deckgl/tile.ts)): the lines' start vertices
-(`LineIds.lineStart`) as `startIndices`, and the layer's decoded `Int32Array` as `getPath`. With
-`_pathType: "open"`, deck.gl takes the lines as already normalised: it skips copying them into its own position
-buffer and uploads the given array as its `vertexPositions` attribute, read at four vertex offsets for each
-segment's neighbours, much as the Three.js page reads one buffer twice.
+(`LineIds.lineStart`, the `geometryVertices` of mlt-wasm's `geometryStarts`) as `startIndices`, and the
+layer's decoded `Int32Array` as `getPath`. With `_pathType: "open"`, deck.gl takes the lines as already
+normalised: it skips copying them into its own position buffer and uploads the given array as its
+`vertexPositions` attribute, read at four vertex offsets for each segment's neighbours, much as the Three.js
+page reads one buffer twice.
 
 The array is integers, and the attribute is a `vec3` of floats in deck.gl's shader. luma.gl decides whether to
 bind an attribute as integers by the shader's declaration, not by the data, so it binds the `Int32Array` with

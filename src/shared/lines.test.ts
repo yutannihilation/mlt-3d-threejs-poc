@@ -31,6 +31,6 @@ describe("lineIds", () => {
         partOffsets: undefined,
       },
     };
-    expect(() => lineIds(point)).toThrow(/is a point, expected a line/);
+    expect(() => lineIds(point)).toThrow(/is a Point, expected a line/);
   });
 });

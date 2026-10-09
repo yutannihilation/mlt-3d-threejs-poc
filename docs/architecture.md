@@ -83,8 +83,8 @@ request ─▶ loading ─▶ fetch ─▶ decodeTileColumns ─▶ lineIds, til
 
 - **Fetch and decode** ([`tile.ts`](../src/shared/tile.ts)). A 404 or 204 is an empty tile. Otherwise
   `decodeTileColumns(data, { layers: ["flights"] })` decodes only that layer. The tile must hold exactly one
-  such layer (layer names need not be unique) with 3D vertices, or it fails. `lineIds` then walks the
-  layer's offsets once through `featureGeometry` (see [GPU data layout](gpu-data.md#line-ids)), and
+  such layer (layer names need not be unique) with 3D vertices, or it fails. `lineIds` then numbers
+  the lines from the starts `geometryStarts` resolves (see [GPU data layout](gpu-data.md#line-ids)), and
   `tileFrame` derives the five numbers that place the tile. A 404 or 204, or a tile with fewer than two
   vertices, which make no segment, is an empty tile (`fetchLineTile` returns `null`, for both pages).
 - **Upload** ([`gpu.ts`](../src/threejs/gpu.ts)). The style texels are computed from the `direction` column, and the

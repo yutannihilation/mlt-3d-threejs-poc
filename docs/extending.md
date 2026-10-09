@@ -33,8 +33,10 @@ comparison renders both at the same URL hash (the camera is kept in it) and reco
 ## Other geometry types
 
 The vertex buffer is the same for every geometry type; what differs is how it is read and the small side
-buffers. `featureGeometry` provides each feature's parts as views with their `firstVertex` in the layer's
-vertex sequence, which is what turns per-feature results into indices into the shared buffer.
+buffers. `geometryStarts` gives, for the whole layer, where each feature's geometries, each geometry's
+vertices and each polygon's rings start in the layer's vertex sequence; `featureGeometry` gives one feature's
+parts as views with their `firstVertex`. Either turns per-feature results into indices into the shared
+buffer.
 
 ### Points
 
@@ -50,7 +52,7 @@ points share it. Size in pixels, extruded in screen space as for lines.
   `polygon.firstVertex` turns them into indices into the layer's buffer. earcut triangulates on `x, y` and
   ignores `z`, so a 3D vertex keeps its altitude. A `TessPolygonsWithOutlines` or `TessPolygons` layer carries
   the triangles already: its `indexBuffer` column is layer-relative and can be uploaded as is.
-- **Outlines** are the line case over the rings, with one difference: a ring's closing vertex is not stored,
+- **Outlines** are the line case over the rings (`geometryStarts`' `ringVertices`), with one difference: a ring's closing vertex is not stored,
   so the segment from its last vertex back to its first is missing from the consecutive reading. An index
   buffer of segment starts, or a second small draw of the closing segments, adds them.
 - **The id buffer** holds the feature index per vertex, for styling and picking.

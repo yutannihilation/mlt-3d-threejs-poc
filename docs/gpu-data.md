@@ -51,9 +51,11 @@ getting one id per part, and returns:
 - `lineOfVertex`: a `Uint32Array` with the line id of every vertex;
 - `featureOfLine`: a `Uint32Array` with the feature index of every line, for looking up properties.
 
-It is built from `featureGeometry(layer, f)`, which gives each line's `firstVertex` and vertex view without
-the caller knowing the layer's offset levels, so the renderer works on any line layout MLT stores. The cost is
-one `fill` per line.
+It is built from `geometryStarts(layer.geometry)`, which resolves the layer's offset levels into where each
+feature's lines and each line's vertices start, so the renderer works on any line layout MLT stores. In a
+layer of lines, those starts are stored columns, returned as they are; they also become `lineStart` and
+`featureLineStart`, which the deck.gl page and the highlight use. The cost is one `fill` per line and one per
+feature.
 
 The ids are uploaded like the positions, read at element offsets 0 and 1:
 

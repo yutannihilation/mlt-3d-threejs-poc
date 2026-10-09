@@ -50,8 +50,8 @@ style texture, and is what picking reads back. Per vertex, the CPU does nothing 
 
 ## Setup
 
-This depends on APIs that are not released: `decodeTileColumns`, `featureGeometry` and `toElevation` of
-`@maplibre/mlt-wasm` exist only on the
+This depends on APIs that are not released: `decodeTileColumns`, `featureGeometry`, `geometryStarts` and
+`toElevation` of `@maplibre/mlt-wasm` exist only on the
 [`feat/wasm-columnar-3d`](https://github.com/yutannihilation/maplibre-tile-spec/tree/feat/wasm-columnar-3d)
 branch of yutannihilation's fork of maplibre-tile-spec. `package.json` links the package from a sibling
 checkout of that branch:

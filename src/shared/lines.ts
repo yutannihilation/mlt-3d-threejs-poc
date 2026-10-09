@@ -1,4 +1,4 @@
-import { featureGeometry, type MltColumnLayer } from "@maplibre/mlt-wasm";
+import { geometryStarts, type MltColumnLayer, MltGeometryType } from "@maplibre/mlt-wasm";
 
 /**
  * The lines of a layer, numbered in vertex order, as the two side buffers the GPU needs next
@@ -28,31 +28,28 @@ export function featureLines(ids: LineIds, feature: number): [number, number] {
 
 /** Throws when a feature is not a line: this renderer draws nothing else. */
 export function lineIds(layer: MltColumnLayer): LineIds {
-  const { dimension, vertices } = layer.geometry;
-  const lineOfVertex = new Uint32Array(vertices.length / dimension);
-  const featureOfLine: number[] = [];
-  const lineStart: number[] = [];
-  const featureLineStart = new Uint32Array(layer.featureCount + 1);
+  const { types } = layer.geometry;
   for (let f = 0; f < layer.featureCount; f++) {
-    featureLineStart[f] = featureOfLine.length;
-    const g = featureGeometry(layer, f);
-    if (g.kind !== "line") {
-      throw new Error(`feature ${f} of layer "${layer.name}" is a ${g.kind}, expected a line`);
-    }
-    for (const line of g.lines) {
-      const id = featureOfLine.length;
-      featureOfLine.push(f);
-      lineStart.push(line.firstVertex);
-      lineOfVertex.fill(id, line.firstVertex, line.firstVertex + line.vertices.length / dimension);
+    if (types[f] !== MltGeometryType.LineString && types[f] !== MltGeometryType.MultiLineString) {
+      const kind = MltGeometryType[types[f]] ?? `type ${types[f]}`;
+      throw new Error(`feature ${f} of layer "${layer.name}" is a ${kind}, expected a line`);
     }
   }
-  featureLineStart[layer.featureCount] = featureOfLine.length;
-  // The lines are stored one after another, so the last ends where the vertices do.
-  lineStart.push(lineOfVertex.length);
+  // In a layer of lines, each geometry is a line: the starts are the line ids' ranges.
+  const { featureGeometries, geometryVertices } = geometryStarts(layer.geometry);
+  const lines = geometryVertices.length - 1;
+  const lineOfVertex = new Uint32Array(geometryVertices[lines]);
+  for (let line = 0; line < lines; line++) {
+    lineOfVertex.fill(line, geometryVertices[line], geometryVertices[line + 1]);
+  }
+  const featureOfLine = new Uint32Array(lines);
+  for (let f = 0; f < layer.featureCount; f++) {
+    featureOfLine.fill(f, featureGeometries[f], featureGeometries[f + 1]);
+  }
   return {
     lineOfVertex,
-    featureOfLine: Uint32Array.from(featureOfLine),
-    lineStart: Uint32Array.from(lineStart),
-    featureLineStart,
+    featureOfLine,
+    lineStart: geometryVertices,
+    featureLineStart: featureGeometries,
   };
 }
