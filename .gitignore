@@ -6,6 +6,3 @@ dist
 # Local scratch output (screenshots, playwright-cli logs)
 .tmp/
 .playwright-cli/
-
-public/tiles/10
-public/tiles/9
