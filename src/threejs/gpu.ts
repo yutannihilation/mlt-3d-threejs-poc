@@ -17,12 +17,12 @@ import {
   UnsignedByteType,
   Vector2,
 } from "three";
-import { ALTITUDE_RANGE_M } from "./config";
-import { LINE_BITS } from "./pick-id";
+import { ALTITUDE_RANGE_M } from "../shared/config";
+import { LINE_BITS } from "./pick";
 import type { Ribbons } from "./ribbon";
 import { LINE_FRAGMENT, LINE_VERTEX, PICK_FRAGMENT } from "./shaders";
-import { altitudeRampTexels, RAMP_WIDTH, STYLE_WIDTH } from "./style";
-import type { TileFrame } from "./transform";
+import { altitudeRampTexels, RAMP_WIDTH, STYLE_WIDTH } from "../shared/style";
+import type { TileFrame } from "../shared/transform";
 
 /**
  * The layer's vertex buffer as decoded (`x, y, z` triples) and its line ids, uploaded

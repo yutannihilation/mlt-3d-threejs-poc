@@ -88,6 +88,14 @@ body {
   font-size: 11px;
 }
 
+.panel .note + .note {
+  margin-top: 4px;
+}
+
+.panel a {
+  color: #f0f921;
+}
+
 .tooltip {
   position: absolute;
   top: 0;

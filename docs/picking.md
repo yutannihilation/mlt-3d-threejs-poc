@@ -21,7 +21,7 @@ The pick has to run inside MapLibre's render callback: that is where the project
 frame is known and where the GL context is in a state Three.js may use. So `pick()` only records the request
 and asks for a frame; it returns a promise that the readback resolves.
 
-[`main.ts`](../src/main.ts) keeps one pick in flight: mouse moves while it runs only overwrite the pending
+[`main.ts`](../src/threejs/main.ts) keeps one pick in flight: mouse moves while it runs only overwrite the pending
 point, and when the pick resolves the latest point is picked next. Positions in between are skipped. If a new
 `pick()` call arrives before the previous one was rendered, the previous promise resolves with `null`.
 
@@ -29,7 +29,7 @@ point, and when the pick resolves the latest point is picked next. Positions in 
 
 Rendering the whole canvas to read one pixel would waste a full-screen pass. Instead the pick pass renders into
 a 1 × 1 target, with a projection that maps the cursor's pixel onto that whole target
-([`pickMatrix`](../src/transform.ts)):
+([`pickMatrix`](../src/threejs/pick.ts)):
 
 ```ts
 // (nx, ny): the centre of CSS pixel (px, py) in normalised device coordinates
@@ -54,7 +54,7 @@ wins. Basemap features do not occlude picks.
 
 ## Pick ids
 
-The pixel has to say which line of which tile. [`pick-id.ts`](../src/pick-id.ts) packs both into 32 bits:
+The pixel has to say which line of which tile. [`pick.ts`](../src/threejs/pick.ts) packs both into 32 bits:
 
 ```text
  31            20 19                   0

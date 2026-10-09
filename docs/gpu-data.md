@@ -45,7 +45,7 @@ normalisation and no conversion on the CPU. The shader converts them to float it
 
 The vertex sequence of a layer runs through all its lines back to back, so the instanced draw above also
 produces a segment from the last vertex of each line to the first vertex of the next. The line ids tell those
-apart. [`lineIds`](../src/lines.ts) numbers the lines of a layer in vertex order, a `MultiLineString` feature
+apart. [`lineIds`](../src/shared/lines.ts) numbers the lines of a layer in vertex order, a `MultiLineString` feature
 getting one id per part, and returns:
 
 - `lineOfVertex`: a `Uint32Array` with the line id of every vertex;
@@ -66,8 +66,8 @@ geometry.setAttribute("aLineEnd", new InterleavedBufferAttribute(lines, 1, 1));
 They do three jobs:
 
 1. **Breaks.** A segment whose ends have different ids straddles two lines, and the vertex shader moves it out
-   of the clip volume. That wastes one instance per line boundary: at the initial view, 6,154 lines among
-   524,764 vertices, about 1 %.
+   of the clip volume. That wastes one instance per line boundary: at the initial view, 6,259 lines among
+   528,285 vertices, about 1 %.
 2. **Style.** The id is the texel index into the style texture.
 3. **Picking.** The id is what the pick pass writes out, along with the tile.
 
@@ -75,7 +75,7 @@ They do three jobs:
 
 Colouring by a property means a colour per line, known only on the CPU after reading a property column. The
 renderer computes it once per tile into a texture, one texel per line, and the fragment shader fetches it with
-the line id: [`lineStyleTexels`](../src/style.ts) reads the `direction` string column at `featureOfLine[line]`
+the line id: [`lineStyleTexels`](../src/shared/style.ts) reads the `direction` string column at `featureOfLine[line]`
 and writes the colour for `departure`, `arrival` or `local` (grey when absent) into an `RGBA8` array of
 1024 texels per row.
 
@@ -93,12 +93,12 @@ that the vertex shader computes from `z` anyway.
 
 ## Byte accounting
 
-At the initial view (20 tiles, 524,764 vertices, 6,154 lines):
+At the initial view (22 tiles, 528,285 vertices, 6,259 lines):
 
 |                              | This PoC                                | A conventional Three.js approach (`LineSegments2`)              |
 | ---------------------------- | --------------------------------------- | --------------------------------------------------------------- |
 | Uploaded per vertex          | 16 B: position 12 B, line id 4 B        | 48 B per segment: positions 2 × 12 B, colours 2 × 12 B          |
-| Uploaded at the initial view | ≈ 8.4 MB, plus ≈ 80 KiB of style texels | ≈ 25 MB                                                         |
+| Uploaded at the initial view | ≈ 8.5 MB, plus ≈ 96 KiB of style texels | ≈ 25 MB                                                         |
 | CPU work per vertex          | one `Uint32Array.fill` slot             | float Mercator conversion, altitude, colour, two segment copies |
 | CPU memory kept per vertex   | the decoded columns, 16 B               | the decoded columns plus float positions, altitudes and colours |
 

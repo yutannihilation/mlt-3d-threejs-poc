@@ -1,4 +1,3 @@
-import { columnValue, featureGeometry, toElevation } from "@maplibre/mlt-wasm";
 import {
   type CustomLayerInterface,
   type CustomRenderMethodInput,
@@ -15,7 +14,7 @@ import {
   TILE_MIN_ZOOM,
   TILE_SIZE,
   TILE_URL,
-} from "./config";
+} from "../shared/config";
 import {
   lineMaterial,
   pickMaterial,
@@ -26,23 +25,20 @@ import {
   type Shared,
   styleTexture,
 } from "./gpu";
-import { decodePickId, MAX_SLOTS } from "./pick-id";
+import { decodePickId, MAX_SLOTS, pickMatrix } from "./pick";
 import { type Ribbons, tessellateRibbons } from "./ribbon";
-import { lineStyleTexels, ribbonColors } from "./style";
-import { featureLines } from "./lines";
-import { fetchLineTile, type LineTile, tileUrl } from "./tile";
-import { pickMatrix, type TileIndex } from "./transform";
+import { describeFeature, type Hit } from "../shared/hit";
+import { lineStyleTexels, vertexColors } from "../shared/style";
+import { type ColorMode, type Shape, type Stats, tileStats } from "../shared/ui";
+import { featureLines } from "../shared/lines";
+import { fetchLineTile, type LineTile, tileUrl } from "../shared/tile";
+import type { TileIndex } from "../shared/transform";
 
 // Pass the 8-bit colours through untouched.
 THREE.ColorManagement.enabled = false;
 
 /** Tiles kept in memory, beyond those in view. */
 const MAX_CACHED_TILES = 256;
-
-export type ColorMode = "altitude" | "direction";
-
-/** Lines are extruded by our own shader; ribbons are tessellated on the CPU and drawn stock. */
-export type Shape = "lines" | "ribbons";
 
 /** A tile on the GPU: its geometry, style texture, and one pair of meshes per world copy drawn. */
 interface ReadyTile {
@@ -84,25 +80,11 @@ interface Drawn {
   matrix: THREE.Matrix4;
 }
 
-export interface Hit {
-  readonly properties: Record<string, number | string | boolean>;
-  /** The hovered feature's lowest and highest altitude over its pieces drawn, in metres. */
-  readonly altitude: readonly [number, number];
-  /** How many drawn tiles hold a piece of it. */
-  readonly tiles: number;
-}
-
 interface PendingPick {
   x: number;
   y: number;
   resolve: (hit: Hit | null) => void;
   reject: (error: unknown) => void;
-}
-
-export interface Stats {
-  tiles: number;
-  lines: number;
-  vertices: number;
 }
 
 function key({ z, x, y }: TileIndex): string {
@@ -308,9 +290,12 @@ export class LinesLayer implements CustomLayerInterface {
     }
     const { tile } = drawn[id.slot].tile;
     const feature = tile.ids.featureOfLine[id.line];
-    const featureId = tile.featureIds.idOfFeature[feature];
-    this.setHighlight(featureId);
-    return this.describe(tile, feature, featureId, drawn);
+    this.setHighlight(tile.featureIds.idOfFeature[feature]);
+    return describeFeature(
+      tile,
+      feature,
+      drawn.map((d) => d.tile.tile),
+    );
   }
 
   /** The lines of `tile` the highlight covers: the hovered feature's piece in it, if any. */
@@ -320,44 +305,6 @@ export class LinesLayer implements CustomLayerInterface {
         ? undefined
         : tile.tile.featureIds.featureOfId.get(this.highlighted);
     return feature === undefined ? [0, 0] : featureLines(tile.tile.ids, feature);
-  }
-
-  /**
-   * The picked feature's properties, and its altitude range over its pieces in every tile drawn,
-   * found by its id.
-   */
-  private describe(tile: LineTile, feature: number, featureId: number, drawn: Drawn[]): Hit {
-    const { layer } = tile;
-    const properties: Record<string, number | string | boolean> = {};
-    for (const column of layer.properties) {
-      const value = columnValue(column, feature);
-      if (value === undefined) continue;
-      properties[column.name] = column.type === "bool" ? value === 1 : value;
-    }
-    // The feature's piece in each tile drawn, once per tile whatever its world copies.
-    const pieces = new Map<LineTile, number>();
-    for (const {
-      tile: { tile: t },
-    } of drawn) {
-      const f = t.featureIds.featureOfId.get(featureId);
-      if (f !== undefined) pieces.set(t, f);
-    }
-    let [lo, hi] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
-    for (const [t, f] of pieces) {
-      const { zStep } = t.layer.geometry;
-      if (zStep === undefined) throw new Error(`layer "${t.layer.name}" has no z`);
-      // The piece's z are every third value of its vertices; each tile has its own z grid, and
-      // metres grow with z, so only the extremes need converting.
-      const { vertices } = featureGeometry(t.layer, f);
-      let [min, max] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
-      for (let i = 2; i < vertices.length; i += 3) {
-        if (vertices[i] < min) min = vertices[i];
-        if (vertices[i] > max) max = vertices[i];
-      }
-      lo = Math.min(lo, toElevation(min, zStep));
-      hi = Math.max(hi, toElevation(max, zStep));
-    }
-    return { properties, altitude: [lo, hi], tiles: pieces.size };
   }
 
   private setHighlight(next: number | null): void {
@@ -399,7 +346,7 @@ export class LinesLayer implements CustomLayerInterface {
       this.shared.metre,
       RIBBON_WIDTH_M,
     );
-    const colors = ribbonColors(ribbons.metres, ribbons.lines, tile.styleTexels, ALTITUDE_RANGE_M);
+    const colors = vertexColors(ribbons.metres, ribbons.lines, tile.styleTexels, ALTITUDE_RANGE_M);
     performance.measure(`tessellate ${key(index)}`, { start });
     const geometry = ribbonGeometry(ribbons, colors.altitude.slice());
     tile.ribbon = {
@@ -483,9 +430,7 @@ export class LinesLayer implements CustomLayerInterface {
     this.tiles.set(k, { state: "loading" });
     fetchLineTile(tileUrl(TILE_URL, index), index)
       .then((tile) => {
-        // A tile with fewer than two vertices has no segment to draw.
-        const ready = tile && tile.layer.geometry.vertices.length >= 6;
-        this.tiles.set(k, ready ? { state: "ready", ...this.upload(tile) } : { state: "empty" });
+        this.tiles.set(k, tile ? { state: "ready", ...this.upload(tile) } : { state: "empty" });
       })
       .catch((error: unknown) => {
         console.error(`tile ${k}:`, error);
@@ -518,10 +463,6 @@ export class LinesLayer implements CustomLayerInterface {
       const entry = this.tiles.get(key(id.canonical));
       return entry?.state === "ready" ? [entry.tile] : [];
     });
-    this.onStats({
-      tiles: ready.length,
-      lines: ready.reduce((n, t) => n + t.ids.featureOfLine.length, 0),
-      vertices: ready.reduce((n, t) => n + t.ids.lineOfVertex.length, 0),
-    });
+    this.onStats(tileStats(ready));
   };
 }

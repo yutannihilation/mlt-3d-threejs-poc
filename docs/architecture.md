@@ -2,21 +2,33 @@
 
 ## Modules
 
-| Module                                | Role                                                                                          | Pure?            |
-| ------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------- |
-| [`main.ts`](../src/main.ts)           | Creates the map, the panel and the layer; turns mouse moves into picks.                       | no               |
-| [`layer.ts`](../src/layer.ts)         | `LinesLayer`, the MapLibre custom layer: tile scheduling and cache, the draw and pick passes. | no               |
-| [`tile.ts`](../src/tile.ts)           | Fetches a tile and decodes it into a `LineTile`.                                              | decode is        |
-| [`lines.ts`](../src/lines.ts)         | Expands a layer's offsets into one line id per vertex.                                        | yes              |
-| [`transform.ts`](../src/transform.ts) | The per-tile `TileFrame` uniforms, and the pick matrix.                                       | yes              |
-| [`style.ts`](../src/style.ts)         | The altitude ramp, and the per-line style texels from a property column.                      | yes              |
-| [`pick-id.ts`](../src/pick-id.ts)     | Encodes and decodes the 32-bit pick id.                                                       | yes              |
-| [`gpu.ts`](../src/gpu.ts)             | Builds the Three.js geometry, textures and materials.                                         | no               |
-| [`shaders.ts`](../src/shaders.ts)     | The GLSL ES 3.00 sources.                                                                     | —                |
-| [`ui.ts`](../src/ui.ts)               | The panel, the legend and the tooltip text.                                                   | `describeHit` is |
+There are two pages, one per renderer, over the same map, tiles, decoding, styles and panel. This document
+is about the Three.js page; the deck.gl page is described in [deck.gl](deckgl.md).
 
-Everything that computes something from data is a pure function with a unit test; the Three.js and MapLibre
-code only wires the results to the GPU.
+| Module                                              | Role                                                                                          | Pure?            |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------- |
+| **Shared**                                          |                                                                                               |                  |
+| [`shared/map.ts`](../src/shared/map.ts)             | Creates the MapLibre map, with the camera in the URL hash.                                    | no               |
+| [`shared/tile.ts`](../src/shared/tile.ts)           | Fetches a tile and decodes it into a `LineTile`, with its feature ids indexed.                | decode is        |
+| [`shared/lines.ts`](../src/shared/lines.ts)         | Expands a layer's offsets into one line id per vertex, and where lines and features start.    | yes              |
+| [`shared/transform.ts`](../src/shared/transform.ts) | The per-tile `TileFrame`: where a tile is, and its z grid.                                    | yes              |
+| [`shared/style.ts`](../src/shared/style.ts)         | The altitude ramp, the per-line style texels, and per-vertex colours.                         | yes              |
+| [`shared/hit.ts`](../src/shared/hit.ts)             | A hovered feature's properties and altitude range over its pieces in view.                    | yes              |
+| [`shared/ui.ts`](../src/shared/ui.ts)               | The panel, the legend and the tooltip text.                                                   | `describeHit` is |
+| **Three.js**                                        |                                                                                               |                  |
+| [`threejs/main.ts`](../src/threejs/main.ts)         | Creates the map, the panel and the layer; turns mouse moves into picks.                       | no               |
+| [`threejs/layer.ts`](../src/threejs/layer.ts)       | `LinesLayer`, the MapLibre custom layer: tile scheduling and cache, the draw and pick passes. | no               |
+| [`threejs/pick.ts`](../src/threejs/pick.ts)         | Encodes and decodes the 32-bit pick id; the pick matrix.                                      | yes              |
+| [`threejs/ribbon.ts`](../src/threejs/ribbon.ts)     | Tessellates lines into ribbons ([Ribbons](ribbons.md)).                                       | yes              |
+| [`threejs/gpu.ts`](../src/threejs/gpu.ts)           | Builds the Three.js geometry, textures and materials.                                         | no               |
+| [`threejs/shaders.ts`](../src/threejs/shaders.ts)   | The GLSL ES 3.00 sources.                                                                     | —                |
+| **deck.gl**                                         |                                                                                               |                  |
+| [`deckgl/main.ts`](../src/deckgl/main.ts)           | Creates the map, the panel and the deck.gl overlay; the tooltip.                              | no               |
+| [`deckgl/layer.ts`](../src/deckgl/layer.ts)         | `FlightsLayer`, a `TileLayer` of one stock `PathLayer` per tile; the highlight.               | no               |
+| [`deckgl/tile.ts`](../src/deckgl/tile.ts)           | A tile's placement matrices, per-vertex colours and row indexes.                              | yes              |
+
+Everything that computes something from data is a pure function with a unit test; the Three.js, deck.gl and
+MapLibre code only wires the results to the GPU.
 
 ## Hosting: a MapLibre custom layer
 
@@ -69,14 +81,15 @@ request ─▶ loading ─▶ fetch ─▶ decodeTileColumns ─▶ lineIds, til
                        empty                       error
 ```
 
-- **Fetch and decode** ([`tile.ts`](../src/tile.ts)). A 404 or 204 is an empty tile. Otherwise
+- **Fetch and decode** ([`tile.ts`](../src/shared/tile.ts)). A 404 or 204 is an empty tile. Otherwise
   `decodeTileColumns(data, { layers: ["flights"] })` decodes only that layer. The tile must hold exactly one
   such layer (layer names need not be unique) with 3D vertices, or it fails. `lineIds` then walks the
   layer's offsets once through `featureGeometry` (see [GPU data layout](gpu-data.md#line-ids)), and
-  `tileFrame` derives the five numbers that place the tile.
-- **Upload** ([`gpu.ts`](../src/gpu.ts)). The style texels are computed from the `direction` column, and the
+  `tileFrame` derives the five numbers that place the tile. A 404 or 204, or a tile with fewer than two
+  vertices, which make no segment, is an empty tile (`fetchLineTile` returns `null`, for both pages).
+- **Upload** ([`gpu.ts`](../src/threejs/gpu.ts)). The style texels are computed from the `direction` column, and the
   geometry and the two materials (draw and pick) are built. Three.js uploads the buffers to the GPU at the
-  tile's first draw. A tile with fewer than two vertices has no segment and is stored as empty.
+  tile's first draw.
 - **Meshes.** A tile gets one draw mesh and one pick mesh per world copy it is drawn in, created on first
   use. They share the tile's geometry and materials, so a second world copy costs nothing on the GPU.
 - **Eviction.** The cache keeps 256 tiles beyond those in view, least recently requested out first, never one
@@ -95,11 +108,12 @@ not program switches.
 ## Stats
 
 On MapLibre's `idle` event the layer reports the tiles, lines and vertices of the ready covering tiles, which
-the panel shows. At the initial view that is 20 tiles, 6,154 lines and 524,764 vertices.
+the panel shows. At the initial view that is 22 tiles, 6,259 lines and 528,285 vertices.
 
 ## Development server
 
-`vite.config.ts` sets `appType: "mpa"`. With the SPA default, Vite answers a request for a missing tile with
-`index.html` and status 200, which the decoder then rejects as a truncated tile; as an MPA a missing tile is a
-404, which is an empty tile. In development, `main.ts` also puts `map` and `lines` on `window` for inspection
-from the console.
+`vite.config.ts` builds three pages: `index.html`, which links the two, `threejs.html` and `deckgl.html`. It
+sets `appType: "mpa"`. With the SPA default, Vite answers a request for a missing tile with `index.html` and
+status 200, which the decoder then rejects as a truncated tile; as an MPA a missing tile is a 404, which is an
+empty tile. In development, each page's `main.ts` also puts `map` and its layer (`lines`) or overlay
+(`overlay`) on `window` for inspection from the console.

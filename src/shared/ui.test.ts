@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vite-plus/test";
-import { describeHit } from "./ui";
+import { lineTile } from "./tile";
+import { describeHit, tileStats } from "./ui";
 
 describe("describeHit", () => {
   test("names the flight, its aircraft, direction and altitude range", () => {
@@ -23,5 +25,13 @@ describe("describeHit", () => {
       "abc123",
       "0 – 0 m",
     ]);
+  });
+});
+
+describe("tileStats", () => {
+  test("counts the tiles, their lines and their vertices", () => {
+    const data = readFileSync(new URL("../__fixtures__/flights-0-0-0.mlt", import.meta.url));
+    const tile = () => lineTile(new Uint8Array(data), { z: 0, x: 0, y: 0 });
+    expect(tileStats([tile(), tile()])).toEqual({ tiles: 2, lines: 6, vertices: 16 });
   });
 });

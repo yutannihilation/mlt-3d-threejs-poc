@@ -1,14 +1,14 @@
 # Ribbons: tessellating on the CPU
 
 The panel's "ribbons" toggle draws every line as a flat horizontal strip, 1,500 m wide
-([`RIBBON_WIDTH_M`](../src/config.ts)), instead of a screen-space line. It is the counterpart of the
+([`RIBBON_WIDTH_M`](../src/shared/config.ts)), instead of a screen-space line. It is the counterpart of the
 line path: lines keep the decoded vertex buffer and extrude it in our own shader, while ribbons are
 tessellated on the CPU into ordinary triangles that a stock Three.js `MeshBasicMaterial` draws, with no
 shader of our own.
 
 ## Tessellation
 
-[`tessellateRibbons`](../src/ribbon.ts) walks each line through `featureGeometry`, the per-feature view
+[`tessellateRibbons`](../src/threejs/ribbon.ts) walks each line through `featureGeometry`, the per-feature view
 of the decoded tile, and writes indexed triangles:
 
 - **Sides.** Each point gets a pair of vertices half the width to the left and right of the line.
@@ -39,7 +39,7 @@ per line, where its ribbon vertices start; a line's vertices are contiguous.
 
 One `MeshBasicMaterial({ vertexColors: true, side: DoubleSide })` draws every tile's ribbons; colour
 management is off, so the 8-bit colours reach the screen as computed. The colours are computed on the CPU
-([`ribbonColors`](../src/style.ts)): one array from the altitude ramp, one from the per-line style texels.
+([`vertexColors`](../src/shared/style.ts)): one array from the altitude ramp, one from the per-line style texels.
 
 - **Colour mode** copies the other array into the drawn `color` attribute, uploaded whole.
 - **Highlight** paints the hovered feature's ribbon vertices white and restores the previous feature's; a
@@ -56,8 +56,8 @@ recorded in the browser's performance timeline as `tessellate z/x/y`.
 |                                     | Lines                       | Ribbons                                                    |
 | ----------------------------------- | --------------------------- | ---------------------------------------------------------- |
 | CPU per tile                        | line ids only               | tessellation and colours                                   |
-| Initial view, CPU                   | —                           | ≈ 255 ms, in the frame of the toggle (busiest tile 107 ms) |
-| Initial view, GPU                   | 524,764 instances of a quad | 1,228,453 triangles                                        |
+| Initial view, CPU                   | —                           | ≈ 230 ms, in the frame of the toggle (busiest tile 100 ms) |
+| Initial view, GPU                   | 528,285 instances of a quad | 1,235,423 triangles                                        |
 | Largest tile (z5, 524,482 vertices) | 16 B per vertex             | 1.7 M ribbon vertices, 1.4 M triangles, 58 MB, 117 ms      |
 
 Most source vertices become two ribbon vertices, but sharp turns add a centre and an arc. The tiles hold

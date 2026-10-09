@@ -1,5 +1,3 @@
-import { Matrix4 } from "three";
-
 export interface TileIndex {
   readonly z: number;
   readonly x: number;
@@ -21,6 +19,14 @@ export interface TileFrame {
   readonly zOffset: number;
 }
 
+/**
+ * How many times wider a metre is at Mercator `y` than at the equator, `1 / cos(latitude)`: for a
+ * Mercator `y`, `cosh(π (1 − 2y))`.
+ */
+export function metreScale(y: number): number {
+  return Math.cosh(Math.PI * (1 - 2 * y));
+}
+
 export function tileFrame(tile: TileIndex, extent: number, zStep: number): TileFrame {
   const tiles = 2 ** tile.z;
   return {
@@ -29,16 +35,4 @@ export function tileFrame(tile: TileIndex, extent: number, zStep: number): TileF
     zScale: 10 ** zStep,
     zOffset: -10000,
   };
-}
-
-/**
- * The clip-space transform that maps the CSS pixel at `(px, py)` of a `width x height`
- * canvas onto the whole viewport, so a 1 x 1 render target sees exactly that pixel.
- * Linear in homogeneous coordinates, so it composes with any projection.
- */
-export function pickMatrix(px: number, py: number, width: number, height: number): Matrix4 {
-  const nx = (2 * (px + 0.5)) / width - 1;
-  const ny = 1 - (2 * (py + 0.5)) / height;
-  // Move the pixel's centre to the origin, then scale a pixel up to the viewport.
-  return new Matrix4().makeScale(width, height, 1).setPosition(-width * nx, -height * ny, 0);
 }

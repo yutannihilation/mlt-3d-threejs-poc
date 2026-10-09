@@ -1,6 +1,6 @@
 # Shaders
 
-The shaders are GLSL ES 3.00 ([`shaders.ts`](../src/shaders.ts)), used through `ShaderMaterial` with
+The shaders are GLSL ES 3.00 ([`shaders.ts`](../src/threejs/shaders.ts)), used through `ShaderMaterial` with
 `glslVersion: GLSL3`, which adds the `#version` line, the precision, `projectionMatrix`, `modelViewMatrix`
 and the quad's `position` attribute. One vertex shader serves both passes; the draw and pick passes differ
 only in the fragment shader.
@@ -21,7 +21,7 @@ vec4 toLocal(ivec3 v, out float metres) {
 }
 ```
 
-The per-tile uniforms come from [`tileFrame`](../src/transform.ts):
+The per-tile uniforms come from [`tileFrame`](../src/shared/transform.ts):
 
 | Uniform               | Value                                        | Meaning                                             |
 | --------------------- | -------------------------------------------- | --------------------------------------------------- |

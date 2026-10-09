@@ -8,11 +8,11 @@ import {
   DIRECTION_COLORS,
   lineStyleTexels,
   RAMP_WIDTH,
-  ribbonColors,
+  vertexColors,
   STYLE_WIDTH,
 } from "./style";
 
-const data = readFileSync(new URL("./__fixtures__/flights-0-0-0.mlt", import.meta.url));
+const data = readFileSync(new URL("../__fixtures__/flights-0-0-0.mlt", import.meta.url));
 const [layer] = decodeTileColumns(new Uint8Array(data), { layers: ["flights"] }).layers;
 
 describe("altitudeRampTexels", () => {
@@ -24,10 +24,10 @@ describe("altitudeRampTexels", () => {
   });
 });
 
-describe("ribbonColors", () => {
+describe("vertexColors", () => {
   test("colours each vertex by its altitude, and by its line's texel", () => {
     const texels = Uint8Array.of(1, 2, 3, 255, 4, 5, 6, 255);
-    const { altitude, direction } = ribbonColors(
+    const { altitude, direction } = vertexColors(
       Float32Array.of(-100, 6000, 99999),
       Uint32Array.of(0, 1, 1),
       texels,

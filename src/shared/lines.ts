@@ -12,6 +12,8 @@ import { featureGeometry, type MltColumnLayer } from "@maplibre/mlt-wasm";
 export interface LineIds {
   readonly lineOfVertex: Uint32Array;
   readonly featureOfLine: Uint32Array;
+  /** Where each line starts: line `l` has vertices `lineStart[l] .. lineStart[l + 1]`. */
+  readonly lineStart: Uint32Array;
   /**
    * Where each feature's lines start: feature `f` has lines
    * `featureLineStart[f] .. featureLineStart[f + 1]`.
@@ -29,6 +31,7 @@ export function lineIds(layer: MltColumnLayer): LineIds {
   const { dimension, vertices } = layer.geometry;
   const lineOfVertex = new Uint32Array(vertices.length / dimension);
   const featureOfLine: number[] = [];
+  const lineStart: number[] = [];
   const featureLineStart = new Uint32Array(layer.featureCount + 1);
   for (let f = 0; f < layer.featureCount; f++) {
     featureLineStart[f] = featureOfLine.length;
@@ -39,9 +42,17 @@ export function lineIds(layer: MltColumnLayer): LineIds {
     for (const line of g.lines) {
       const id = featureOfLine.length;
       featureOfLine.push(f);
+      lineStart.push(line.firstVertex);
       lineOfVertex.fill(id, line.firstVertex, line.firstVertex + line.vertices.length / dimension);
     }
   }
   featureLineStart[layer.featureCount] = featureOfLine.length;
-  return { lineOfVertex, featureOfLine: Uint32Array.from(featureOfLine), featureLineStart };
+  // The lines are stored one after another, so the last ends where the vertices do.
+  lineStart.push(lineOfVertex.length);
+  return {
+    lineOfVertex,
+    featureOfLine: Uint32Array.from(featureOfLine),
+    lineStart: Uint32Array.from(lineStart),
+    featureLineStart,
+  };
 }

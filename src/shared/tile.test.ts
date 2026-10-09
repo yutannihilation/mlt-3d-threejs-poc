@@ -4,7 +4,7 @@ import type { MltColumnLayer } from "@maplibre/mlt-wasm";
 import { featureIds, lineTile, tileUrl } from "./tile";
 
 const data = new Uint8Array(
-  readFileSync(new URL("./__fixtures__/flights-0-0-0.mlt", import.meta.url)),
+  readFileSync(new URL("../__fixtures__/flights-0-0-0.mlt", import.meta.url)),
 );
 
 describe("lineTile", () => {

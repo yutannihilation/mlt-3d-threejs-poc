@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { decodeTileColumns, type MltColumnLayer, MltGeometryType } from "@maplibre/mlt-wasm";
 import { describe, expect, test } from "vite-plus/test";
-import { lineIds } from "./lines";
+import { lineIds } from "../shared/lines";
 import { ARC_STEP, type Ribbons, tessellateRibbons } from "./ribbon";
-import { tileFrame } from "./transform";
+import { tileFrame } from "../shared/transform";
 
 type Point = [number, number, number];
 
@@ -138,7 +138,7 @@ describe("tessellateRibbons", () => {
 
   test("keeps each line's vertices together, across features and parts", () => {
     // The fixture: a LineString of 3 vertices, and a MultiLineString of 2 + 3.
-    const data = readFileSync(new URL("./__fixtures__/flights-0-0-0.mlt", import.meta.url));
+    const data = readFileSync(new URL("../__fixtures__/flights-0-0-0.mlt", import.meta.url));
     const [layer] = decodeTileColumns(new Uint8Array(data)).layers;
     const r = ribbons(layer);
     expect(r.lineStart).toHaveLength(4);

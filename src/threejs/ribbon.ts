@@ -1,5 +1,5 @@
 import { featureGeometry, type MltColumnLayer } from "@maplibre/mlt-wasm";
-import type { TileFrame } from "./transform";
+import { metreScale, type TileFrame } from "../shared/transform";
 
 /**
  * A layer's lines tessellated into flat ribbons: horizontal strips of a width in metres along
@@ -145,7 +145,7 @@ export function tessellateRibbons(
         py = v[k + 1] * scale;
         pm = v[k + 2] * zScale + zOffset;
         // A metre at this latitude, in Mercator units.
-        const local = metre * Math.cosh(Math.PI * (1 - 2 * (origin[1] + py)));
+        const local = metre * metreScale(origin[1] + py);
         pz = pm * local;
         half = 0.5 * width * local;
         // The pairs this point ends the incoming segment with, and starts the outgoing one from.

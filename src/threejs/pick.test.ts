@@ -1,22 +1,29 @@
 import { Vector4 } from "three";
 import { describe, expect, test } from "vite-plus/test";
-import { pickMatrix, tileFrame } from "./transform";
+import { decodePickId, encodePickId, MAX_LINES, MAX_SLOTS, pickMatrix } from "./pick";
 
-describe("tileFrame", () => {
-  test("places the world tile at the origin with one metre per z step", () => {
-    expect(tileFrame({ z: 0, x: 0, y: 0 }, 4096, 0)).toEqual({
-      origin: [0, 0],
-      scale: 1 / 4096,
-      zScale: 1,
-      zOffset: -10000,
-    });
+function bytes(id: number): Uint8Array {
+  return Uint8Array.of(id & 255, (id >>> 8) & 255, (id >>> 16) & 255, (id >>> 24) & 255);
+}
+
+describe("pick ids", () => {
+  test("round-trip through the pixel's bytes", () => {
+    for (const id of [
+      { slot: 0, line: 0 },
+      { slot: 3, line: 1234 },
+      { slot: MAX_SLOTS - 1, line: MAX_LINES - 1 },
+    ]) {
+      expect(decodePickId(bytes(encodePickId(id)))).toEqual(id);
+    }
   });
 
-  test("offsets a tile by its position and scales a fine z grid", () => {
-    const frame = tileFrame({ z: 2, x: 3, y: 1 }, 4096, -2);
-    expect(frame.origin).toEqual([0.75, 0.25]);
-    expect(frame.scale).toBeCloseTo(1 / (4096 * 4), 15);
-    expect(1001234 * frame.zScale + frame.zOffset).toBeCloseTo(12.34, 9);
+  test("an undrawn pixel is nothing", () => {
+    expect(decodePickId(bytes(0))).toBeNull();
+  });
+
+  test("reject what the bits cannot hold", () => {
+    expect(() => encodePickId({ slot: MAX_SLOTS, line: 0 })).toThrow(RangeError);
+    expect(() => encodePickId({ slot: 0, line: MAX_LINES })).toThrow(RangeError);
   });
 });
 

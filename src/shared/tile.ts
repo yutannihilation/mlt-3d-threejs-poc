@@ -14,6 +14,8 @@ export interface LineTile {
    */
   readonly featureIds: FeatureIds;
   readonly frame: TileFrame;
+  /** The layer's z grid: metres are `toElevation(z, zStep)`. */
+  readonly zStep: number;
 }
 
 export interface FeatureIds {
@@ -65,13 +67,22 @@ export function lineTile(data: Uint8Array, index: TileIndex): LineTile {
     ids: lineIds(layer),
     featureIds: featureIds(layer),
     frame: tileFrame(index, extent, geometry.zStep),
+    zStep: geometry.zStep,
   };
 }
 
-/** `null` for a tile the server has no data for (404 or 204). */
-export async function fetchLineTile(url: string, index: TileIndex): Promise<LineTile | null> {
-  const response = await fetch(url);
+/**
+ * `null` for a tile with nothing to draw: one the server has no data for (404 or 204), or with
+ * fewer than two vertices, which make no segment.
+ */
+export async function fetchLineTile(
+  url: string,
+  index: TileIndex,
+  signal?: AbortSignal,
+): Promise<LineTile | null> {
+  const response = await fetch(url, { signal });
   if (response.status === 404 || response.status === 204) return null;
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  return lineTile(new Uint8Array(await response.arrayBuffer()), index);
+  const tile = lineTile(new Uint8Array(await response.arrayBuffer()), index);
+  return tile.ids.lineOfVertex.length >= 2 ? tile : null;
 }

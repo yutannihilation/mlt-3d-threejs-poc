@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
@@ -5,7 +6,16 @@ export default defineConfig({
   appType: "mpa",
   // Pre-bundling breaks the package's `import * as wasm from "./mlt_wasm_bg.wasm"`.
   optimizeDeps: { exclude: ["@maplibre/mlt-wasm"] },
-  build: { target: "es2023" },
+  build: {
+    target: "es2023",
+    rollupOptions: {
+      input: {
+        index: resolve(import.meta.dirname, "index.html"),
+        threejs: resolve(import.meta.dirname, "threejs.html"),
+        deckgl: resolve(import.meta.dirname, "deckgl.html"),
+      },
+    },
+  },
   test: {
     // Its dist/ imports siblings without file extensions, which Node's ESM loader rejects; let Vite resolve them.
     server: { deps: { inline: ["@maplibre/mlt-wasm"] } },
