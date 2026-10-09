@@ -2,7 +2,7 @@
 export const TILE_URL = `${import.meta.env.BASE_URL}tiles/{z}/{x}/{y}.mlt`;
 /** The `--min-zoom` / `--max-zoom` the tiles were built with; beyond the max, tiles are overzoomed. */
 export const TILE_MIN_ZOOM = 3;
-export const TILE_MAX_ZOOM = 10;
+export const TILE_MAX_ZOOM = 8;
 /** The `--layer` the tiles were built with. */
 export const LAYER = "flights";
 /** Tile size in CSS pixels, MapLibre's 512 px convention. */

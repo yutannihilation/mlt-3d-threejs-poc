@@ -71,9 +71,10 @@ git clone -b feat/wasm-columnar-3d https://github.com/yutannihilation/maplibre-t
 
 ### Tiles
 
-The tiles are not in this repository: `public/tiles/{z}/{x}/{y}.mlt` is ignored by git. They are 3D MLT tiles
-with one line layer named `flights`, written by the `mlt` CLI of the same branch.
-[`scripts/build-tiles.sh`](scripts/build-tiles.sh) gives every feature an id and tiles them (it needs `jq`):
+The tiles are committed in `public/tiles/{z}/{x}/{y}.mlt`, zoom 3 to 8 (about 20 MB); beyond zoom 8 they are
+overzoomed. They are 3D MLT tiles with one line layer named `flights`, written by the `mlt` CLI of the same
+branch. To rebuild them, [`scripts/build-tiles.sh`](scripts/build-tiles.sh) gives every feature an id and tiles
+them (it needs `jq`):
 
 ```bash
 cargo build --release --manifest-path maplibre-tile-spec/rust/Cargo.toml -p mlt
@@ -96,12 +97,18 @@ vp install --force   # --force re-copies the mlt-wasm build after rebuilding it
 vp dev
 ```
 
-There is no CI yet. Building and deploying this on CI will need the same: the branch built, and the tiles.
-
 `vp dev` serves `index.html`, `threejs.html` and `deckgl.html`. `vp check` formats, lints and type-checks;
 `vp test` runs the unit tests of the pure parts: line ids, the tile frame, feature ids, style texels and
 colours, the tooltip and its altitude range; for Three.js, the pick id, pick matrix and ribbons; for deck.gl,
 the tile placement and per-vertex data.
+
+### Deployment
+
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) deploys the pages to GitHub Pages on every push to
+`main`. It checks out the fork next to this repository at the commit pinned in `MLT_COMMIT`, builds
+`@maplibre/mlt-wasm` there the way the fork's own CI does, then installs, checks, tests and builds this
+repository with the Pages path as Vite's `base`. After pushing a new commit of the branch, update
+`MLT_COMMIT` to deploy it.
 
 ## Data
 
@@ -111,6 +118,10 @@ the [adsb.lol](https://www.adsb.lol/) historical data
 `v2026.10.03-planes-readsb-prod-0`), made available under the
 [Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/). The map credits adsb.lol
 and the ODbL in its attribution control.
+
+The tiles in `public/tiles` are a database derived from that data, and are likewise made available under the
+[Open Database License (ODbL) 1.0](https://opendatacommons.org/licenses/odbl/1-0/), with the same attribution:
+flight data from [adsb.lol](https://www.adsb.lol/).
 
 The basemap is [OpenFreeMap](https://openfreemap.org/) (© [OpenMapTiles](https://www.openmaptiles.org/), data
 from [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors).

@@ -8,7 +8,7 @@
 #
 # Usage: scripts/build-tiles.sh FLIGHTS.geojson
 # The mlt CLI is taken from $MLT, or else from a build of the sibling checkout (see README).
-# The zoom range and the layer name must match src/config.ts.
+# The zoom range and the layer name must match src/shared/config.ts.
 set -euo pipefail
 input="${1:?usage: scripts/build-tiles.sh FLIGHTS.geojson}"
 mlt="${MLT:-../maplibre-tile-spec/rust/target/release/mlt}"
@@ -22,7 +22,7 @@ rm -rf public/tiles
 "$mlt" convert \
   --mlt-version 2 \
   --min-zoom 3 \
-  --max-zoom 10 \
+  --max-zoom 8 \
   --z-step 0 \
   --layer flights \
   --verify \

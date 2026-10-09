@@ -3,9 +3,9 @@ dist
 *.log
 .DS_Store
 
-# The tiles are built separately (see README).
-public/tiles
-
 # Local scratch output (screenshots, playwright-cli logs)
 .tmp/
 .playwright-cli/
+
+public/tiles/10
+public/tiles/9

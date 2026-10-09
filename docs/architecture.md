@@ -59,8 +59,8 @@ MapLibre render(gl, { defaultProjectionData })
  └─ renderDraw()             one draw call per drawn tile, into the canvas
 ```
 
-1. **Which tiles.** `map.coveringTiles` with a tile size of 512 px and the tiles' zoom range (3 to 10) gives
-   the ideal tiles for the view; beyond zoom 10 it returns zoom 10 tiles, which are then overzoomed. For each,
+1. **Which tiles.** `map.coveringTiles` with a tile size of 512 px and the tiles' zoom range (3 to 8) gives
+   the ideal tiles for the view; beyond zoom 8 it returns zoom 8 tiles, which are then overzoomed. For each,
    the layer requests it (or bumps it in the LRU), and draws the tile itself if loaded, or else its nearest
    loaded ancestor, so that zooming shows coarser lines rather than holes. An ancestor standing in for several
    children is drawn once. A tile that is empty or failed is not replaced by an ancestor.

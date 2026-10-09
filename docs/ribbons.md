@@ -64,8 +64,8 @@ recorded in the browser's performance timeline as `tessellate z/x/y`.
 Most source vertices become two ribbon vertices, but sharp turns add a centre and an arc. The tiles hold
 every position of the source data at every zoom, and on a low-zoom tile those positions are quantised to
 a coarse grid: on the z5 and z8 tiles measured, 41–51 % of segments are shorter than 4 tile units, and the
-grid turns about 30 % of all points into turns sharper than 15°, each with a round join. On a z10 tile it is
-6 %. Simplifying the lines for each zoom when tiling, which `mlt convert` does not do, would cut both the
+grid turns about 30 % of all points into turns sharper than 15°, each with a round join. On a z10 tile,
+from a build up to zoom 10 rather than the 8 the tiles here stop at, it is 6 %. Simplifying the lines for each zoom when tiling, which `mlt convert` does not do, would cut both the
 tile and the tessellation; so would dropping points closer together than a fraction of the ribbon's width
 before tessellating.
 
