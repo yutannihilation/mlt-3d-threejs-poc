@@ -8,8 +8,9 @@ shader of our own.
 
 ## Tessellation
 
-[`tessellateRibbons`](../src/threejs/ribbon.ts) walks each line through `featureGeometry`, the per-feature view
-of the decoded tile, and writes indexed triangles:
+[`tessellateRibbons`](../src/threejs/ribbon.ts) walks the lines in line-id order, each a slice of the decoded
+vertex buffer between its start and the next (`LineIds.lineStart`, from `geometryStarts`), and writes indexed
+triangles:
 
 - **Sides.** Each point gets a pair of vertices half the width to the left and right of the line.
   Tile coordinates and Mercator units share their axes, so directions and normals are computed on the
@@ -53,12 +54,12 @@ recorded in the browser's performance timeline as `tessellate z/x/y`.
 
 ## Cost
 
-|                                     | Lines                       | Ribbons                                                    |
-| ----------------------------------- | --------------------------- | ---------------------------------------------------------- |
-| CPU per tile                        | line ids only               | tessellation and colours                                   |
-| Initial view, CPU                   | —                           | ≈ 230 ms, in the frame of the toggle (busiest tile 100 ms) |
-| Initial view, GPU                   | 528,285 instances of a quad | 1,235,423 triangles                                        |
-| Largest tile (z5, 524,482 vertices) | 16 B per vertex             | 1.7 M ribbon vertices, 1.4 M triangles, 58 MB, 117 ms      |
+|                                     | Lines                       | Ribbons                                                   |
+| ----------------------------------- | --------------------------- | --------------------------------------------------------- |
+| CPU per tile                        | line ids only               | tessellation and colours                                  |
+| Initial view, CPU                   | —                           | ≈ 175 ms, in the frame of the toggle (busiest tile 72 ms) |
+| Initial view, GPU                   | 528,285 instances of a quad | 1,235,423 triangles                                       |
+| Largest tile (z5, 524,482 vertices) | 16 B per vertex             | 1.7 M ribbon vertices, 1.4 M triangles, 58 MB, 117 ms     |
 
 Most source vertices become two ribbon vertices, but sharp turns add a centre and an arc. The tiles hold
 every position of the source data at every zoom, and on a low-zoom tile those positions are quantised to
@@ -70,7 +71,7 @@ before tessellating.
 
 ## What it shows about the API
 
-The tessellator needed nothing beyond what the line path uses: `featureGeometry` for each line's vertices
-and its `firstVertex`, the line ids built from it, and the tile frame. It is the "tessellation that creates
+The tessellator needed nothing beyond what the line path uses: the line starts from `geometryStarts`, which
+also number the lines, and the tile frame. It is the "tessellation that creates
 vertices" case of the mlt-wasm README: the decoded vertex buffer is read once and not uploaded, and the
 output carries its own line ids.

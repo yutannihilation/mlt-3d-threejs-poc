@@ -33,7 +33,7 @@ const metre = 1 / 4096;
 
 function ribbons(layer: MltColumnLayer, width = 1): Ribbons {
   const ids = lineIds(layer);
-  return tessellateRibbons(layer, ids.lineOfVertex, ids.featureOfLine.length, frame, metre, width);
+  return tessellateRibbons(layer, ids.lineStart, frame, metre, width);
 }
 
 /** Ribbon vertex `i`'s `x, y` in tile units, and its offset from `(cx, cy)`. */

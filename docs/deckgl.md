@@ -106,7 +106,7 @@ the pointer leaves the canvas, deck.gl still calls `onHover`, with nothing picke
 The ribbons are the same `PathLayer` with other props: `billboard: false` extrudes the path on the ground
 plane instead of facing the screen, `widthUnits: "meters"` with a width of 1,500 m, and `jointRounded: true`
 for round joins. deck.gl joins and extrudes in its vertex shader, so toggling ribbons changes uniforms only and
-takes about two frames, where the Three.js page tessellates on the CPU for about 230 ms
+takes about two frames, where the Three.js page tessellates on the CPU for about 175 ms
 ([Ribbons](ribbons.md#cost)). Two differences:
 
 - **The width** is converted from metres at the viewport centre, for the whole view, not at each point.

@@ -340,8 +340,7 @@ export class LinesLayer implements CustomLayerInterface {
     const start = performance.now();
     const ribbons = tessellateRibbons(
       layer,
-      ids.lineOfVertex,
-      ids.featureOfLine.length,
+      ids.lineStart,
       frame,
       this.shared.metre,
       RIBBON_WIDTH_M,
