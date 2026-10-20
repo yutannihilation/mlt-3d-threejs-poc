@@ -11,7 +11,7 @@ peerDependencyRules:
 # Do not resolve versions published less than 7 days ago (minutes).
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
-  # Built locally from ../maplibre-tile-spec (see README).
+  # 0.2.1 was published less than 7 days before it was adopted.
   - "@maplibre/mlt-wasm"
   # The Vite+ toolchain the project was scaffolded with.
   - vite-plus

@@ -50,33 +50,18 @@ style texture, and is what picking reads back. Per vertex, the CPU does nothing 
 
 ## Setup
 
-This depends on APIs that are not released: `decodeTileColumns`, `featureGeometry`, `geometryStarts` and
-`toElevation` of `@maplibre/mlt-wasm` exist only on the
-[`feat/wasm-columnar-3d`](https://github.com/yutannihilation/maplibre-tile-spec/tree/feat/wasm-columnar-3d)
-branch of yutannihilation's fork of maplibre-tile-spec. `package.json` links the package from a sibling
-checkout of that branch:
-
-```text
-repo/
-├── maplibre-tile-spec/    the fork, on feat/wasm-columnar-3d
-└── mlt-3d-threejs-poc/    this repository
-```
-
-Building the package needs Rust with a nightly toolchain, `wasm-pack` and Node.js:
-
-```bash
-git clone -b feat/wasm-columnar-3d https://github.com/yutannihilation/maplibre-tile-spec.git
-(cd maplibre-tile-spec/rust/mlt-wasm && npm ci && npm run build)
-```
+`@maplibre/mlt-wasm` comes from npm; Node.js and pnpm (via `vp`) are all the pages need.
 
 ### Tiles
 
 The tiles are committed in `public/tiles/{z}/{x}/{y}.mlt`, zoom 3 to 8 (about 20 MB); beyond zoom 8 they are
-overzoomed. They are 3D MLT tiles with one line layer named `flights`, written by the `mlt` CLI of the same
-branch. To rebuild them, [`scripts/build-tiles.sh`](scripts/build-tiles.sh) gives every feature an id and tiles
-them (it needs `jq`):
+overzoomed. They are 3D MLT tiles with one line layer named `flights`, written by the `mlt` CLI of
+[maplibre-tile-spec](https://github.com/maplibre/maplibre-tile-spec). To rebuild them, check it out next to this
+repository and build the CLI (it needs Rust); [`scripts/build-tiles.sh`](scripts/build-tiles.sh) gives every
+feature an id and tiles them (it needs `jq`):
 
 ```bash
+git clone https://github.com/maplibre/maplibre-tile-spec.git
 cargo build --release --manifest-path maplibre-tile-spec/rust/Cargo.toml -p mlt
 cd mlt-3d-threejs-poc && scripts/build-tiles.sh flights.geojson
 ```
@@ -93,7 +78,7 @@ name must match [`src/config.ts`](src/shared/config.ts).
 In this repository:
 
 ```bash
-vp install --force   # --force re-copies the mlt-wasm build after rebuilding it
+vp install
 vp dev
 ```
 
@@ -105,10 +90,7 @@ the tile placement and per-vertex data.
 ### Deployment
 
 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) deploys the pages to GitHub Pages on every push to
-`main`. It checks out the fork next to this repository at the commit pinned in `MLT_COMMIT`, builds
-`@maplibre/mlt-wasm` there the way the fork's own CI does, then installs, checks, tests and builds this
-repository with the Pages path as Vite's `base`. After pushing a new commit of the branch, update
-`MLT_COMMIT` to deploy it.
+`main`. It installs, checks, tests and builds this repository with the Pages path as Vite's `base`.
 
 ## Data
 
