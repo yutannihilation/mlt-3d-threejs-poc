@@ -8,7 +8,7 @@ Per tile, the GPU receives:
 | Line ids          | `Uint32Array`                   | 4 B per vertex               | expanded from the offsets, once per tile |
 | Quad              | `Float32Array` and indices      | 4 corners, 6 indices         | constant                                 |
 | Style texture     | `RGBA8`, 1024 × ⌈lines / 1024⌉  | 4 B per line, at least 4 KiB | the `direction` column, once per tile    |
-| Per-tile uniforms | 5 floats                        | —                            | `tileFrame(tile, extent, zStep)`         |
+| Per-tile uniforms | 4 floats                        | —                            | `tileFrame(tile, extent, zStep)`         |
 
 And shared by all tiles, a 256 × 1 `RGBA8` texture of the altitude ramp.
 

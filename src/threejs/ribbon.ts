@@ -66,7 +66,7 @@ export function tessellateRibbons(
 ): Ribbons {
   const { dimension, vertices } = layer.geometry;
   if (dimension !== 3) throw new Error(`layer "${layer.name}" has no z coordinates`);
-  const { origin, scale, zScale, zOffset } = frame;
+  const { origin, scale, zScale } = frame;
   // Mostly two ribbon vertices per source vertex, more at round joins.
   const estimate = (vertices.length / 3) * 2;
   const positions = new Growing((n) => new Float32Array(n), estimate * 3);
@@ -137,7 +137,7 @@ export function tessellateRibbons(
       const k = points[i] * 3;
       px = v[k] * scale;
       py = v[k + 1] * scale;
-      pm = v[k + 2] * zScale + zOffset;
+      pm = v[k + 2] * zScale;
       // A metre at this latitude, in Mercator units.
       const local = metre * metreScale(origin[1] + py);
       pz = pm * local;

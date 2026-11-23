@@ -18,8 +18,8 @@ describe("deckPlacement", () => {
     const placement = deckPlacement(tileFrame({ z: 2, x: 3, y: 1 }, 4096, 0), 4096);
     const { high } = placement.modelMatrix;
     // The tile spans x 0.75 .. 1 and y 0.25 .. 0.5 of the world: 384 .. 512 and 384 .. 256 in common units.
-    expect(place(placement, high, [0, 0, 10000])).toEqual([384, 384, 0]);
-    expect(place(placement, high, [4096, 4096, 22000])).toEqual([512, 256, 12000]);
+    expect(place(placement, high, [0, 0, 0])).toEqual([384, 384, 0]);
+    expect(place(placement, high, [4096, 4096, 12000])).toEqual([512, 256, 12000]);
   });
 
   test("below deck.gl's offset zoom, scales metres to the tile centre's latitude", () => {
@@ -27,7 +27,6 @@ describe("deckPlacement", () => {
     // The centre is at Mercator y 0.375, latitude atan(sinh(π / 4)).
     const latitude = Math.atan(Math.sinh(Math.PI / 4));
     expect(modelMatrix.low[10] / modelMatrix.high[10]).toBeCloseTo(1 / Math.cos(latitude), 12);
-    expect(modelMatrix.low[14] / modelMatrix.high[14]).toBeCloseTo(1 / Math.cos(latitude), 12);
     expect(modelMatrix.high[10]).toBeCloseTo(0.1, 15);
   });
 });

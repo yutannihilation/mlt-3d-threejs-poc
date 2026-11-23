@@ -27,7 +27,7 @@ Tile coordinates are placed the way deck.gl's own `MVTLayer` places its tiles: i
 with a per-tile `coordinateOrigin` (the tile's north-west corner in deck.gl's common space, 512 units across
 the world, y pointing north) and a `modelMatrix` that scales tile coordinates to common units and flips y.
 [`deckPlacement`](../src/deckgl/tile.ts) builds both from the shared `TileFrame`. The model matrix also turns
-the z grid into metres (`z · 10^zStep − 10000`).
+the z grid into metres (`z · 10^zStep`).
 
 ### Altitude
 

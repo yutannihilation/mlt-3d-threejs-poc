@@ -102,7 +102,6 @@ function frameUniforms(frame: TileFrame, shared: Shared) {
     uOrigin: { value: new Vector2(frame.origin[0], frame.origin[1]) },
     uScale: { value: frame.scale },
     uZScale: { value: frame.zScale },
-    uZOffset: { value: frame.zOffset },
     uMetre: { value: shared.metre },
     uResolution: { value: new Vector2(1, 1) },
     uWidth: { value: 1 },

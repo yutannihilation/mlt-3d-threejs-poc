@@ -15,7 +15,7 @@ relative to the tile's north-west corner:
 ```glsl
 vec4 toLocal(ivec3 v, out float metres) {
   vec2 xy = vec2(v.xy) * uScale;                       // tile coordinates → Mercator, relative to the corner
-  metres = float(v.z) * uZScale + uZOffset;             // z grid → metres
+  metres = float(v.z) * uZScale;                        // z grid → metres
   float y = uOrigin.y + xy.y;                           // the vertex's absolute Mercator y
   return vec4(xy, metres * uMetre * cosh(PI * (1.0 - 2.0 * y)), 1.0);
 }
@@ -23,12 +23,12 @@ vec4 toLocal(ivec3 v, out float metres) {
 
 The per-tile uniforms come from [`tileFrame`](../src/shared/transform.ts):
 
-| Uniform               | Value                                        | Meaning                                             |
-| --------------------- | -------------------------------------------- | --------------------------------------------------- |
-| `uOrigin`             | `(x, y) / 2^z`                               | the tile's north-west corner in Mercator units      |
-| `uScale`              | `1 / (extent · 2^z)`                         | Mercator units per tile coordinate                  |
-| `uZScale`, `uZOffset` | `10^zStep`, `−10000`                         | metres are `−10000 + z · 10^zStep`, the MLT z grid  |
-| `uMetre`              | `MercatorCoordinate.fromLngLat([0, 0], 1).z` | one metre in Mercator units at the equator (shared) |
+| Uniform   | Value                                        | Meaning                                             |
+| --------- | -------------------------------------------- | --------------------------------------------------- |
+| `uOrigin` | `(x, y) / 2^z`                               | the tile's north-west corner in Mercator units      |
+| `uScale`  | `1 / (extent · 2^z)`                         | Mercator units per tile coordinate                  |
+| `uZScale` | `10^zStep`                                   | metres are `z · 10^zStep`, the MLT z grid           |
+| `uMetre`  | `MercatorCoordinate.fromLngLat([0, 0], 1).z` | one metre in Mercator units at the equator (shared) |
 
 ### Altitude in Mercator units
 
@@ -55,8 +55,8 @@ pick matrix for the pick pass.
 Everything per vertex runs in float32; the design keeps the numbers small enough for that.
 
 - **Integers to float** are exact below 2²⁴ (16,777,216). Tile coordinates are far below it. `z` on a 1 m
-  grid is about 10,000 to 25,000 for these flights, exact. On a millimetre grid (`zStep` −3) `z` passes 2²⁴
-  above about 6,800 m, where `float(v.z)` rounds to 2 mm: invisible on a map, but the shader's altitude is not
+  grid is about −100 to 15,000 for these flights, exact. On a millimetre grid (`zStep` −3) `z` passes 2²⁴
+  above about 16,800 m, where `float(v.z)` rounds to 2 mm: invisible on a map, but the shader's altitude is not
   exact in general. Exact metres for display come from `toElevation` on the CPU.
 - **Positions** are relative to the tile's corner. A local coordinate is at most one tile wide, `2^−z`, so
   float32's relative precision of 2⁻²⁴ gives about 2 mm at zoom 10 (on a 40,075 km world). An absolute

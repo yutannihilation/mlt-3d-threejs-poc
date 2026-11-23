@@ -85,7 +85,7 @@ request ─▶ loading ─▶ fetch ─▶ decodeTileColumns ─▶ lineIds, til
   `decodeTileColumns(data, { layers: ["flights"] })` decodes only that layer. The tile must hold exactly one
   such layer (layer names need not be unique) with 3D vertices, or it fails. `lineIds` then numbers
   the lines from the starts `geometryStarts` resolves (see [GPU data layout](gpu-data.md#line-ids)), and
-  `tileFrame` derives the five numbers that place the tile. A 404 or 204, or a tile with fewer than two
+  `tileFrame` derives the four numbers that place the tile. A 404 or 204, or a tile with fewer than two
   vertices, which make no segment, is an empty tile (`fetchLineTile` returns `null`, for both pages).
 - **Upload** ([`gpu.ts`](../src/threejs/gpu.ts)). The style texels are computed from the `direction` column, and the
   geometry and the two materials (draw and pick) are built. Three.js uploads the buffers to the GPU at the

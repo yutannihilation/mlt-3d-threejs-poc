@@ -12,7 +12,7 @@ describe("lineTile", () => {
     const tile = lineTile(data, { z: 0, x: 0, y: 0 });
     expect(tile.layer.featureCount).toBe(2);
     expect(tile.ids.featureOfLine).toHaveLength(3);
-    expect(tile.frame).toEqual({ origin: [0, 0], scale: 1 / 4096, zScale: 1, zOffset: -10000 });
+    expect(tile.frame).toEqual({ origin: [0, 0], scale: 1 / 4096, zScale: 1 });
   });
 
   test("indexes each feature's id, both ways", () => {
