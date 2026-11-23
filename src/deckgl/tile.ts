@@ -45,7 +45,7 @@ export function deckPlacement(frame: TileFrame, extent: number): DeckPlacement {
     s, 0, 0, 0,
     0, -s, 0, 0,
     0, 0, frame.zScale * zFactor, 0,
-    0, 0, frame.zOffset * zFactor, 1,
+    0, 0, 0, 1,
   ];
   return {
     coordinateOrigin: [WORLD_SIZE * x0, WORLD_SIZE * (1 - y0), 0],

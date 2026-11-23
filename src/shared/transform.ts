@@ -6,7 +6,7 @@ export interface TileIndex {
 
 /**
  * What the vertex shader needs to place a tile's decoded integers: the tile in Web Mercator
- * units (`0 .. 1` across the world) and the z grid in metres. Five numbers per tile; every
+ * units (`0 .. 1` across the world) and the z grid in metres. Four numbers per tile; every
  * vertex is transformed on the GPU.
  */
 export interface TileFrame {
@@ -14,9 +14,8 @@ export interface TileFrame {
   readonly origin: readonly [number, number];
   /** Mercator units per tile coordinate. */
   readonly scale: number;
-  /** Metres are `z * zScale + zOffset`, the layer's `-10000 + z * 10 ** zStep`. */
+  /** Metres are `z * zScale`, the layer's `z * 10 ** zStep`. */
   readonly zScale: number;
-  readonly zOffset: number;
 }
 
 /**
@@ -33,6 +32,5 @@ export function tileFrame(tile: TileIndex, extent: number, zStep: number): TileF
     origin: [tile.x / tiles, tile.y / tiles],
     scale: 1 / (extent * tiles),
     zScale: 10 ** zStep,
-    zOffset: -10000,
   };
 }

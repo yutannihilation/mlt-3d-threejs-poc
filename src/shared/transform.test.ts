@@ -7,7 +7,6 @@ describe("tileFrame", () => {
       origin: [0, 0],
       scale: 1 / 4096,
       zScale: 1,
-      zOffset: -10000,
     });
   });
 
@@ -15,7 +14,7 @@ describe("tileFrame", () => {
     const frame = tileFrame({ z: 2, x: 3, y: 1 }, 4096, -2);
     expect(frame.origin).toEqual([0.75, 0.25]);
     expect(frame.scale).toBeCloseTo(1 / (4096 * 4), 15);
-    expect(1001234 * frame.zScale + frame.zOffset).toBeCloseTo(12.34, 9);
+    expect(1234 * frame.zScale).toBeCloseTo(12.34, 9);
   });
 });
 

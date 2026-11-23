@@ -17,12 +17,16 @@ function layerOf(...lines: Point[][]): MltColumnLayer {
     featureCount: lines.length,
     geometry: {
       types: Uint8Array.from(lines, () => MltGeometryType.LineString),
+      layout: "outlines",
       partOffsets: Uint32Array.from([0, ...lines.map((l) => (total += l.length))]),
       dimension: 3,
       vertices: Int32Array.from(lines.flat(2)),
       zStep: 0,
+      heightMode: "absolute",
     },
     properties: [],
+    vertexValues: [],
+    triangleValues: [],
   };
 }
 
@@ -47,8 +51,8 @@ describe("tessellateRibbons", () => {
   test("a straight segment is a quad, half the width to each side, at its altitude", () => {
     const r = ribbons(
       layerOf([
-        [0, 2048, 10500],
-        [10, 2048, 10600],
+        [0, 2048, 500],
+        [10, 2048, 600],
       ]),
       2,
     );
@@ -109,8 +113,8 @@ describe("tessellateRibbons", () => {
     // y = 1024 is at latitude ~66.5°, where a metre is cosh(π / 2) ≈ 2.51 times wider.
     const r = ribbons(
       layerOf([
-        [0, 1024, 10000],
-        [10, 1024, 10000],
+        [0, 1024, 0],
+        [10, 1024, 0],
       ]),
     );
     expect(from(r, 0, [0, 1024])[1]).toBeCloseTo(0.5 * Math.cosh(Math.PI / 2), 4);

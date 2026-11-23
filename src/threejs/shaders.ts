@@ -18,7 +18,6 @@ in uint aLineEnd;
 uniform vec2 uOrigin;
 uniform float uScale;
 uniform float uZScale;
-uniform float uZOffset;
 uniform float uMetre;
 uniform vec2 uResolution;
 uniform float uWidth;
@@ -35,7 +34,7 @@ const float NEAR = 1e-6;
 // latitude, where a metre grows by 1 / cos(lat) = cosh(pi * (1 - 2 * y)).
 vec4 toLocal(ivec3 v, out float metres) {
   vec2 xy = vec2(v.xy) * uScale;
-  metres = float(v.z) * uZScale + uZOffset;
+  metres = float(v.z) * uZScale;
   float y = uOrigin.y + xy.y;
   return vec4(xy, metres * uMetre * cosh(PI * (1.0 - 2.0 * y)), 1.0);
 }
